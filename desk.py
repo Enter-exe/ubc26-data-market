@@ -18,23 +18,25 @@ def screen(receipt):
     for offer in receipt["offers"]:
         rows = "".join(f"<tr><td>{r['index']}</td><td>{r['miles']}</td><td>{r['quote']}</td>"
                        f"<td>{'Verified' if r['verified'] else 'Failed'}</td></tr>" for r in offer["samples"])
-        score = (f"Held-out error <b>{offer['error']:.2f}</b> · estimated value "
+        score = (f"Projected full-data error <b>{offer['projected_error']:.2f}</b> · additional value "
                  f"<b>{offer['value']:.2f} credits</b>") if offer["value"] is not None else "Score withheld because a row failed verification."
         offers.append(f"""<article><h3>{offer['seller']} <small>{offer['decision']}</small></h3>
 <p>{score}</p><details><summary>Inspect eight sample rows</summary><table>
-<tr><th>Index</th><th>Miles</th><th>Quote</th><th>Proof</th></tr>{rows}</table>
+<tr><th>Lane ID</th><th>Miles</th><th>Quote</th><th>Proof</th></tr>{rows}</table>
 <p>Committed SHA-256 root</p><code>{offer['root']}</code></details></article>""")
     ledger = "".join(f"<tr><td>{x['purpose']}</td><td>{x['seller']}</td><td>{x['amount']}</td>"
                      f"<td>{x['balance']}</td></tr>" for x in receipt["ledger"])
     title = f"Buy {receipt['winner']}." if receipt["winner"] else "Pass on both offers."
+    delivery = (f"<p>Measured error after delivery <b>{receipt['delivered_error']:.2f}</b> across all 64 lanes.</p>"
+                if receipt["delivered_error"] is not None else "")
     return f"""<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Buyer desk · UBC26</title><link rel="stylesheet" href="/desk.css"><main>
 <header><strong>Freight data market</strong><span>UBC26 / Simulated payments</span></header>
 <h1>Buyer desk</h1><form action="/"><label>Market conditions<select name="scenario">{options}</select></label>
 <label>Dataset price · credits<input name="price" type="number" min="1" max="100" required value="{price}"></label>
 <input type="hidden" name="seed" value="{seed}"><button>Evaluate offers</button></form>
-<section class="decision"><h2>{title}</h2><p>Baseline quote error <b>{receipt['baseline']:.2f}</b> across 32 held-out jobs.
-The agent values a ten-unit reduction in average error at one credit.</p></section>
+<section class="decision"><h2>{title}</h2><p>Baseline quote error <b>{receipt['baseline']:.2f}</b> before sampling. Keeping the paid samples brings it to <b>{receipt['retained_error']:.2f}</b> across 64 benchmark lanes.</p>
+<p>At {price} credits, buying must cut the remaining error by more than {price * 10:.0f} units. Each seller’s estimate uses eight randomly drawn lanes.</p>{delivery}</section>
 <div class="columns"><section><h2>Seller evidence</h2>{''.join(offers)}</section>
 <section><h2>Wallet receipt</h2><p>Opening balance <b>100 credits</b></p><table>
 <tr><th>Item</th><th>Seller</th><th>Paid</th><th>Left</th></tr>{ledger}</table>
