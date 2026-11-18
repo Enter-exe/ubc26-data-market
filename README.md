@@ -1,6 +1,6 @@
 # UBC26 · Try-before-you-buy data market for agents
 
-A buyer can inspect a few records but needs to decide whether the remaining records are worth their price. This demo makes that decision visible. Two sellers offer freight quotes. The buyer pays a small sample fee to each, checks where the rows came from, measures their usefulness on its own pricing task, then buys the qualifying offer with the largest estimated surplus.
+A buyer can inspect a few records but needs to decide whether the remaining records are worth their price. The offline decision demo makes that tradeoff visible. Two synthetic sellers offer freight quotes. The buyer pays a small sample fee to each, checks where the rows came from, measures their usefulness on its own pricing task, then buys the qualifying offer with the largest estimated surplus.
 
 ## Run the first demo
 
@@ -14,7 +14,7 @@ The estimated error of a full listing is its average quote error on the eight ra
 
 For a contrasting run, choose **One rate fits every route**. A good sample can teach the agent enough to keep its credits. Receipt version 2 records retained, projected and delivered errors. Version 1 receipts can be replayed with the CLI at commit `482aebc`.
 
-This demonstrates a purchase rule under controlled conditions. A valid proof establishes membership in the committed dataset. Label quality, representative sampling across buyers, and the value of unseen rows are separate questions. All participants run in one process. The wallet is simulated, and rerunning the script starts a fresh session.
+This demonstrates a purchase rule under controlled conditions. A valid proof establishes membership in the committed dataset. Label quality, representative sampling across buyers, and the value of unseen rows are separate questions. In the freight demo, all participants run in one process. Its wallet is simulated, and rerunning the script starts a fresh session.
 
 ## Hackathon scope
 
@@ -24,16 +24,31 @@ The original project proposed two sellers of labeled truck images. The image dat
 | --- | --- | --- |
 | 1 · Offline buying decision (implemented) | Two commitments, paid samples, proof checks, held-out evaluation, buy or pass, full delivery | A single run explains each decision using measured error and accounts for both fees and the purchase. |
 | 2 · Inspectable demo | Buyer and seller boundaries, a replayable decision receipt, and a UI showing samples, scores, price, and wallet history | A viewer can trace which rows and proof root drove a purchase. A changed row fails verification. A run with two poor offers ends without a purchase. |
-| 3 · Testnet settlement | Register a listing commitment, collect a sample fee, and settle one full purchase on a test network | Receipt links show successful transactions. A retry can recover the same purchase without another charge. |
+| 3 · Testnet settlement (paid preview verified, full purchase pending) | Register a listing commitment, collect a sample fee, and settle one full purchase on a test network | Receipt links show successful transactions. A retry can recover the same purchase without another charge. |
 | 4 · Real evaluation | Use licensed records, a private holdout, and repeated draws at several sample sizes | Report variation in sample decisions and compare them with measured utility after full delivery. |
 
-The larger protocol adds seller collateral, verifiable random sampling, learning curves, and chunked payments with a dispute mechanism. Prioritize these once the end-to-end purchase is demonstrable. Repeated small purchases could expose much of a listing. A deployed market needs a per-listing disclosure and pricing policy before offering valuable data.
+The larger protocol adds seller collateral, stronger resistance to block-proposer bias, learning curves, and chunked payments with a dispute mechanism. Prioritize these once the end-to-end purchase is demonstrable. Repeated small purchases could expose much of a listing. A deployed market needs a per-listing disclosure and pricing policy before offering valuable data.
 
 ## Proposed hackathon entry
 
-Enter Agentic Payments & AI and opt in to Best use of Arc. The proposed testnet milestone is to pay each sample fee in test USDC, verify the returned rows, and buy only when the estimated utility covers the price and gas within the buyer's remaining budget. Link confirmed transaction hashes to the corresponding listing and receipt. Document the contracts used, decision rule, seller allowlist and spending limits. The current demo uses simulated credits.
+Enter Agentic Payments & AI and opt in to Best use of Arc. The buyer has paid for a verified Chicago taxi preview on Arc testnet. The remaining payment milestone is to settle the full purchase when estimated utility covers its price and gas within the buyer's budget. The freight desk currently demonstrates that buying decision with simulated credits.
 
 The track and Arc awards can stack ($2,000 and $1,000), alongside an overall award and qualifying bounties. Solana is an alternative chain award ($1,500). Teams select one chain award. Submit a public repo, working demo, technical README and 2–3 minute video by November 20 at noon Central. Finalists must attend the November 21 closing ceremony in person for prizes. [Official guide](https://docs.google.com/document/d/1QaySCo7u3VxMVNdk3C5Ab3ewc2E46AuLntti-Uzx5EY/edit) · [Devpost](https://ubc-hackathon-2026.devpost.com/)
+
+## Replay the paid preview
+
+On November 18 the seller anchored the Chicago snapshot in block 72,891,028. The buyer paid 0.01 test USDC in block 72,891,092, plus 0.000573 test USDC in gas. Block 72,891,094 selected eight row indices. The cloud buyer verified their proofs and recovered the same preview on retry. [Seller anchor](https://explorer.testnet.arc.io/tx/0xac99b6dd2748c309d34b7b4d77055ad0bc13ced6ec14ec6a336b66366d2e4159) · [Buyer payment](https://explorer.testnet.arc.io/tx/0x06d228d192e63d666687d30c62f0fcbf65265a020c57abe83980f9a067946153) · [Recorded public draw](examples/arc-testnet-draw.json)
+
+To independently reproduce the draw from Arc, run the following from the repository root. This makes read-only RPC calls and compares the result with the recorded draw. The row payload and delivery credentials stay outside the repository.
+
+```sh
+python3 -B arc_draw.py \
+  --seller 0xbdaf6907e159e633939e9db63adc35b2045db61f \
+  --buyer 0x565ff030eba37c58a595118f3cc6a3d341b6b414 \
+  --listing-tx 0xac99b6dd2748c309d34b7b4d77055ad0bc13ced6ec14ec6a336b66366d2e4159 \
+  --request-tx 0x06d228d192e63d666687d30c62f0fcbf65265a020c57abe83980f9a067946153 \
+  > /tmp/replayed-draw.json && diff -u examples/arc-testnet-draw.json /tmp/replayed-draw.json
+```
 
 ## Arc sample protocol
 

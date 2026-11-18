@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "chain_id": 5042002,
+  "root": "0541c018390b0a6a8108260ea7cd44d5cbb67cbe0149259ecd2aec7de0cbb004",
+  "indices": [
+    28,
+    44,
+    56,
+    62,
+    25,
+    53,
+    10,
+    46
+  ],
+  "seller": "0xbdaf6907e159e633939e9db63adc35b2045db61f",
+  "buyer": "0x565ff030eba37c58a595118f3cc6a3d341b6b414",
+  "listing_tx": "0xac99b6dd2748c309d34b7b4d77055ad0bc13ced6ec14ec6a336b66366d2e4159",
+  "request_tx": "0x06d228d192e63d666687d30c62f0fcbf65265a020c57abe83980f9a067946153",
+  "fee_base_units": "10000000000000000",
+  "request_gas_fee_base_units": "573000000000000",
+  "buyer_total_base_units": "10573000000000000",
+  "listing_block": 72891028,
+  "listing_block_hash": "0x57c327eaca66e4ab9b0a052c10a5b4552166c269f19e97ac6653ccea690c2c16",
+  "request_block": 72891092,
+  "request_block_hash": "0xfc4a94d885cab999b27edd4a58fdb5429839dba50848004799c7189fe82b9a2a",
+  "draw_block": 72891094,
+  "draw_block_hash": "0xf5646eca16a2af3144ece774b86b9a85366c9d7448fd2b3522b0c5b1f27a732c"
+}
