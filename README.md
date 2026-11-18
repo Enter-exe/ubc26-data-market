@@ -47,6 +47,15 @@ The Chicago taxi API provides a working public stand-in for a seller feed. The i
 
 The verifier uses a trusted RPC. The future block is a replayable source of demo randomness with potential block-proposer bias. A seller can withhold delivery, and buyers can buy more requests. Production use needs an enforceable disclosure policy and a delivery or refund mechanism. The paid Arc sampling path uses a separate snapshot from the synthetic valuation desk. A fully settled purchase and measurement on a separate real-world benchmark remain open.
 
+Prepare the two unsigned wallet requests with the commands below. Set `ROOT` to the importer’s output and `LISTING_TX` to the confirmed anchor transaction hash. Check the returned chain ID against the connected wallet before submitting each request.
+
+```sh
+python3 arc_intent.py listing --seller "$SELLER" --root "$ROOT"
+python3 arc_intent.py request --seller "$SELLER" --buyer "$BUYER" --listing-tx "$LISTING_TX"
+```
+
+Run `python3 -B -m unittest -v test_protocol` for a local rehearsal using fictional Arc receipts. It checks that a retry returns the same eight rows, failed authentication or payment denies delivery, and a changed fare fails verification.
+
 **Private delivery demo.** Set a high-entropy `UBC26_BUYER_TOKEN` for the configured buyer and share it over a private channel. Start the loopback service with `python3 seller_api.py --snapshot /tmp/taxi.json --seller "$SELLER" --buyer "$BUYER" --listing-tx "$LISTING_TX"`. The buyer calls `GET /sample/<request_tx>` on port 8766 with an Authorization bearer header. The seller independently checks the request against Arc before returning the proof package. Use the same request hash to recover a lost response. This single-buyer demo uses a pre-shared credential; exposing it remotely requires a private or TLS-protected transport.
 
 To fetch from the agent, use `python3 buyer_sample.py --seller "$SELLER" --buyer "$BUYER" --listing-tx "$LISTING_TX" --request-tx "$REQUEST_TX"`. It checks Arc itself, requests the preview, validates each proof and emits the verified receipt. Repeating this read never sends another payment.
