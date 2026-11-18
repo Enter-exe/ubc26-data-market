@@ -86,7 +86,7 @@ def checked_transaction(rpc, tx_hash, sender, recipient, value):
     for address in {sender, recipient}:
         if rpc("eth_getCode", [address, tag]) != "0x":
             raise ValueError(f"Expected an account with empty code at block {height}: {address}")
-    return (height, index), canonical_hash, tx.get("input")
+    return (height, index), canonical_hash, tx.get("input"), receipt
 
 
 def draw_indices(root_bytes, request_hash_bytes, block_hash_bytes):
@@ -110,7 +110,7 @@ def verify_listing(rpc, seller, listing_tx):
     if quantity(rpc("eth_chainId", []), "chain ID") != CHAIN_ID:
         raise ValueError(f"Expected Arc Testnet chain {CHAIN_ID}")
 
-    listing_pos, listing_hash, anchor = checked_transaction(rpc, listing_tx, seller, seller, 0)
+    listing_pos, listing_hash, anchor, _ = checked_transaction(rpc, listing_tx, seller, seller, 0)
     anchor = hex_data(anchor, len(LISTING_TAG) + 32, "listing calldata")
     if not anchor.startswith("0x" + LISTING_TAG.hex()):
         raise ValueError("Listing calldata has the wrong protocol tag")
@@ -129,7 +129,7 @@ def verify_draw(rpc, seller, buyer, listing_tx, request_tx):
     if seller == buyer:
         raise ValueError("Seller and buyer must have distinct addresses")
     listing_pos, listing_hash, root = verify_listing(rpc, seller, listing_tx)
-    request_pos, request_hash, payment = checked_transaction(rpc, request_tx, buyer, seller, FEE_BASE_UNITS)
+    request_pos, request_hash, payment, receipt = checked_transaction(rpc, request_tx, buyer, seller, FEE_BASE_UNITS)
     payment = hex_data(payment, len(REQUEST_TAG) + 32, "request calldata")
     if payment != "0x" + REQUEST_TAG.hex() + listing_tx[2:]:
         raise ValueError("Sample payment must reference the listing transaction")
@@ -144,8 +144,12 @@ def verify_draw(rpc, seller, buyer, listing_tx, request_tx):
     if draw_block == final_height and draw_hash != final_hash:
         raise ValueError("Draw block does not match the finalized tip")
     indices = draw_indices(bytes.fromhex(root), bytes.fromhex(request_tx[2:]), bytes.fromhex(draw_hash[2:]))
+    gas_used = quantity(receipt.get("gasUsed"), "request gas used")
+    gas_price = quantity(receipt.get("effectiveGasPrice"), "request effective gas price")
+    network_fee = gas_used * gas_price
     return dict(version=1, chain_id=CHAIN_ID, root=root, indices=indices, seller=seller, buyer=buyer,
                 listing_tx=listing_tx, request_tx=request_tx, fee_base_units=str(FEE_BASE_UNITS),
+                request_gas_fee_base_units=str(network_fee), buyer_total_base_units=str(FEE_BASE_UNITS + network_fee),
                 listing_block=listing_pos[0], listing_block_hash=listing_hash,
                 request_block=request_pos[0], request_block_hash=request_hash,
                 draw_block=draw_block, draw_block_hash=draw_hash)

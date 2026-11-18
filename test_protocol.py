@@ -20,10 +20,10 @@ TOKEN = "offline-fixture-token"
 def fixture_responses(root):
     responses = {("eth_chainId", ()): hex(5042002)}
     transactions = [
-        (10, LISTING, SELLER, 0, b"UBC26:listing:v1:" + bytes.fromhex(root)),
-        (11, REQUEST, BUYER, 10**16, b"UBC26:sample:v1:" + bytes.fromhex(LISTING[2:])),
+        (10, LISTING, SELLER, 0, 24_000, 300_000_000_001, b"UBC26:listing:v1:" + bytes.fromhex(root)),
+        (11, REQUEST, BUYER, 10**16, 25_001, 400_000_000_001, b"UBC26:sample:v1:" + bytes.fromhex(LISTING[2:])),
     ]
-    for height, tx_hash, sender, value, data in transactions:
+    for height, tx_hash, sender, value, gas_used, gas_price, data in transactions:
         block_hash = f"0x{height:064x}"
         position = dict(blockHash=block_hash, blockNumber=hex(height), transactionIndex="0x0")
         responses["eth_getTransactionByHash", (tx_hash,)] = {
@@ -31,7 +31,8 @@ def fixture_responses(root):
             "type": "0x2", "value": hex(value), "input": "0x" + data.hex(),
         }
         responses["eth_getTransactionReceipt", (tx_hash,)] = dict(
-            position, status="0x1", transactionHash=tx_hash)
+            position, status="0x1", transactionHash=tx_hash,
+            gasUsed=hex(gas_used), effectiveGasPrice=hex(gas_price))
         responses["eth_getBlockByNumber", (hex(height), False)] = dict(
             hash=block_hash, number=hex(height), transactions=[tx_hash])
         for address in (BUYER, SELLER):
@@ -107,6 +108,10 @@ class ProtocolSmokeTest(unittest.TestCase):
 
     def deliver(self, request):
         return package(self.snapshot, self.draw(request))
+
+    def test_buyer_total_includes_request_gas_only(self):
+        self.assertEqual(self.buyer_draw["request_gas_fee_base_units"], "10000400000025001")
+        self.assertEqual(self.buyer_draw["buyer_total_base_units"], "20000400000025001")
 
     def test_buyer_receives_same_eight_proven_rows_on_retry(self):
         with seller_endpoint(self.deliver) as url:
