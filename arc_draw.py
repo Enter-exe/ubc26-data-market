@@ -103,6 +103,23 @@ def draw_indices(root_bytes, request_hash_bytes, block_hash_bytes):
     return indices
 
 
+def verify_listing(rpc, seller, listing_tx):
+    """Read a finalized seller commitment before preparing a sample payment."""
+    seller = hex_data(seller, 20, "seller")
+    listing_tx = hex_data(listing_tx, 32, "listing transaction")
+    if quantity(rpc("eth_chainId", []), "chain ID") != CHAIN_ID:
+        raise ValueError(f"Expected Arc Testnet chain {CHAIN_ID}")
+
+    listing_pos, listing_hash, anchor = checked_transaction(rpc, listing_tx, seller, seller, 0)
+    anchor = hex_data(anchor, len(LISTING_TAG) + 32, "listing calldata")
+    if not anchor.startswith("0x" + LISTING_TAG.hex()):
+        raise ValueError("Listing calldata has the wrong protocol tag")
+    final_height, final_hash, _ = block_at(rpc, "finalized")
+    if listing_pos[0] > final_height or (listing_pos[0] == final_height and listing_hash != final_hash):
+        raise ValueError("Listing anchor is not finalized on the canonical chain")
+    return listing_pos, listing_hash, anchor[-64:]
+
+
 def verify_draw(rpc, seller, buyer, listing_tx, request_tx):
     """Resolve both transactions with a trusted read-only RPC and return JSON-ready evidence."""
     seller = hex_data(seller, 20, "seller")
@@ -111,14 +128,7 @@ def verify_draw(rpc, seller, buyer, listing_tx, request_tx):
     request_tx = hex_data(request_tx, 32, "request transaction")
     if seller == buyer:
         raise ValueError("Seller and buyer must have distinct addresses")
-    if quantity(rpc("eth_chainId", []), "chain ID") != CHAIN_ID:
-        raise ValueError(f"Expected Arc Testnet chain {CHAIN_ID}")
-
-    listing_pos, listing_hash, anchor = checked_transaction(rpc, listing_tx, seller, seller, 0)
-    anchor = hex_data(anchor, len(LISTING_TAG) + 32, "listing calldata")
-    if not anchor.startswith("0x" + LISTING_TAG.hex()):
-        raise ValueError("Listing calldata has the wrong protocol tag")
-    root = anchor[-64:]
+    listing_pos, listing_hash, root = verify_listing(rpc, seller, listing_tx)
     request_pos, request_hash, payment = checked_transaction(rpc, request_tx, buyer, seller, FEE_BASE_UNITS)
     payment = hex_data(payment, len(REQUEST_TAG) + 32, "request calldata")
     if payment != "0x" + REQUEST_TAG.hex() + listing_tx[2:]:

@@ -5,7 +5,7 @@ from http.server import HTTPServer
 from threading import Thread
 from urllib.error import HTTPError
 
-from arc_draw import verify_draw
+from arc_draw import verify_draw, verify_listing
 from buyer_sample import fetch_preview
 from chicago_snapshot import build_snapshot
 from sample_delivery import package
@@ -52,6 +52,43 @@ def seller_endpoint(deliver):
         finally:
             server.shutdown()
             worker.join()
+
+
+class ListingVerificationTest(unittest.TestCase):
+    root = "ab" * 32
+
+    def verify(self, responses):
+        def rpc(method, params):
+            return responses[method, tuple(params)]
+        return verify_listing(rpc, SELLER, LISTING)
+
+    def test_returns_anchor_position_hash_and_lowercase_root(self):
+        responses = fixture_responses(self.root)
+        anchor = responses["eth_getTransactionByHash", (LISTING,)]
+        anchor["input"] = "0x" + anchor["input"][2:].upper()
+        self.assertEqual(self.verify(responses), ((10, 0), f"0x{10:064x}", self.root))
+
+    def test_rejects_wrong_chain(self):
+        responses = fixture_responses(self.root)
+        responses["eth_chainId", ()] = "0x1"
+        with self.assertRaises(ValueError):
+            self.verify(responses)
+
+    def test_rejects_invalid_anchors(self):
+        cases = [
+            ("wrong signer", "eth_getTransactionByHash", (LISTING,), {"from": BUYER}),
+            ("failed receipt", "eth_getTransactionReceipt", (LISTING,), {"status": "0x0"}),
+            ("missing from block", "eth_getBlockByNumber", ("0xa", False), {"transactions": []}),
+            ("unfinalized", "eth_getBlockByNumber", ("finalized", False), {"number": "0x9"}),
+            ("conflicting finalized tip", "eth_getBlockByNumber", ("finalized", False),
+             {"number": "0xa", "hash": "0x" + "ff" * 32}),
+        ]
+        for label, method, params, changes in cases:
+            with self.subTest(label):
+                responses = fixture_responses(self.root)
+                responses[method, params].update(changes)
+                with self.assertRaises(ValueError):
+                    self.verify(responses)
 
 
 class ProtocolSmokeTest(unittest.TestCase):

@@ -47,11 +47,11 @@ The Chicago taxi API provides a working public stand-in for a seller feed. The i
 
 The verifier uses a trusted RPC. The future block is a replayable source of demo randomness with potential block-proposer bias. A seller can withhold delivery, and buyers can buy more requests. Production use needs an enforceable disclosure policy and a delivery or refund mechanism. The paid Arc sampling path uses a separate snapshot from the synthetic valuation desk. A fully settled purchase and measurement on a separate real-world benchmark remain open.
 
-Prepare the two unsigned wallet requests with the commands below. Set `ROOT` to the importer’s output and `LISTING_TX` to the confirmed anchor transaction hash. Check the returned chain ID against the connected wallet before submitting each request.
+Prepare the two unsigned wallet requests with the commands below. Set `ROOT` to the importer’s output and `LISTING_TX` to the confirmed anchor transaction hash. With `--expected-root`, the buyer checks the seller, transaction and finalized commitment against the advertised root before emitting a payment request. Omit that flag only to prepare parameters offline. Check the returned chain ID against the connected wallet before submitting each request.
 
 ```sh
 python3 arc_intent.py listing --seller "$SELLER" --root "$ROOT"
-python3 arc_intent.py request --seller "$SELLER" --buyer "$BUYER" --listing-tx "$LISTING_TX"
+python3 arc_intent.py request --seller "$SELLER" --buyer "$BUYER" --listing-tx "$LISTING_TX" --expected-root "$ROOT"
 ```
 
 Run `python3 -B -m unittest -v test_protocol` for a local rehearsal using fictional Arc receipts. It checks that a retry returns the same eight rows, failed authentication or payment denies delivery, and a changed fare fails verification.
