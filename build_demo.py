@@ -17,7 +17,8 @@ def build(snapshot, benchmark):
                 request_tx="0x" + hashlib.sha256(b"offline BTC preview 26").hexdigest())
     preview = package(snapshot, draw)
     check(preview, draw)
-    return {"runs": runs, "samples": preview["samples"]}
+    chicago_path = Path(__file__).with_name("examples") / "arc-testnet-draw.json"
+    return {"runs": runs, "samples": preview["samples"], "chicago": json.loads(chicago_path.read_text())}
 
 
 if __name__ == "__main__":

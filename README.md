@@ -4,7 +4,9 @@ A seller commits to 64 hourly BTC–USD training examples. An agent pays for eig
 
 ## Show the judges
 
-Download and open [demo.html](demo.html) in a desktop browser. All assets and both recorded BTC buyer runs are embedded, so the console also works offline. With `python3 desk.py` running, the same console is available at [the BTC demo route](http://127.0.0.1:8765/btc). Click **Replay decision** to follow the eight-row draw, valuation and transaction trace. Switch the reward from **0.10** to **0.20** to see the same preview trigger a buy, then compare the forecast with the actual holdout result. Expand **Inspect sample & payment evidence** to recompute all eight Merkle proofs in the browser and inspect the separate Chicago testnet receipt. [Watch the 21-second walkthrough](proofdesk-demo.webm).
+[Watch the narrated judge demo (2:27, MP4)](proofdesk-judges.mp4). The recording includes optional English subtitles and shows both buyer decisions, sample verification, and the result on unseen hours.
+
+Download and open [demo.html](demo.html) in a desktop browser. All assets and both recorded BTC buyer runs are embedded, so the console also works offline. With `python3 desk.py` running, the same console is available at [the BTC demo route](http://127.0.0.1:8765/btc). Click **Replay decision** to follow the eight-row draw, valuation and transaction trace. Switch the reward from **0.10** to **0.20** to see the same preview trigger a buy, then compare the forecast with the actual holdout result. Expand **Inspect sample & payment evidence** to recompute all eight BTC Merkle proofs in the browser. **Reproduce Chicago draw** replays the selection from the recorded testnet payment, seller commitment and future block hash, and checks the eight indices against the public receipt. [Watch the 21-second walkthrough](proofdesk-demo.webm).
 
 The console replays output from the Python buyer with a fixed draw and simulated BTC payments. Refresh its embedded receipts after importing new fixtures with `python3 build_demo.py --snapshot /tmp/btc-listing.json --benchmark /tmp/btc-buyer.json`.
 
