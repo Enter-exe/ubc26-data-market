@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#161915"><title>Proofdesk · Buyer console</title>
+<meta name="theme-color" content="#161915"><title>Proofdesk · Sample exchange</title>
 <style>
 :root{--ink:#1e211c;--paper:#f6f5ef;--muted:#5e6359;--line:#d7d8cd;--orange:#ff9155;--panel:#1a211d;--mono:"IBM Plex Mono","SFMono-Regular",Consolas,monospace;--sans:"DM Sans","Helvetica Neue",Arial,sans-serif}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:16px;-webkit-font-smoothing:antialiased}button,select{font:inherit;color:inherit}button,summary{cursor:pointer}button:focus-visible,a:focus-visible,summary:focus-visible{outline:3px solid #ec7940;outline-offset:4px}a{color:inherit;text-underline-offset:4px}h1,h2,h3,p{margin:0}button{border:0}.wrap{width:min(1320px,100%);margin:0 auto;padding-inline:clamp(20px,4.8vw,75px)}
@@ -15,16 +15,154 @@ details{margin:18px 0 30px;border-block:1px solid var(--line)}summary{padding:15
 @media(max-width:800px){.grid{grid-template-columns:minmax(0,1.4fr) minmax(250px,1fr)}.wrap{padding-inline:22px}.market,.decision{padding:19px}.bar{gap:24px}.intro{padding-top:26px}.legend{font-size:10px}.panelhead{gap:4px}.chip{font-size:9px;padding:5px}.track{padding:15px}}
 @media(max-width:660px){.bar{height:56px;gap:16px}.brand{font-size:20px}nav{display:none}.grid,.tracegrid,.proofgrid{grid-template-columns:1fr}.intro{align-items:start;flex-direction:column;padding:24px 0 18px;gap:12px}.intro p{font-size:14px}.play{padding:10px 16px}.market,.decision{padding:18px}.track+.track{border-left:0;border-top:1px solid var(--line)}.chart{min-height:140px}.verdict{font-size:48px}.explain{min-height:0}.proofgrid{gap:8px}.reward{margin-top:10px}.trace{margin-top:22px}.mode{font-size:10px}}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+::selection{background:#ffd0a7;color:#29231c}
+.wrap{width:min(1440px,100%);padding-inline:clamp(20px,4vw,64px)}
+.bar{height:60px}.bar nav a:first-child{color:#c7c9c1;border-color:transparent}.bar nav a[href="#exchange"]{color:white;border-color:var(--orange)}
+.intro{align-items:center;gap:24px;padding:30px 0 22px}.intro h1{font-size:clamp(40px,4.1vw,65px);letter-spacing:-.06em}.intro p{margin-top:9px;font-size:15px}
+.flow-controls{display:flex;align-items:center;justify-content:center;gap:8px}.flow-controls .play{min-width:148px;min-height:44px}
+.flow-frame{border:1px solid #bfc4b6;border-radius:12px;overflow:hidden;background:#fcfcf6;box-shadow:0 2px 4px #252b1b09}
+.flow-grid{display:grid;grid-template-columns:minmax(0,2.13fr) minmax(260px,.87fr)}
+.flow-map{min-width:0;background:#19211c;color:#eff2e9;padding:20px 23px 12px;display:flex;flex-direction:column}
+.flow-heading{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:0 0 7px}.flow-heading h2{font-size:20px;font-weight:600;letter-spacing:-.035em}.flow-heading span{color:#c8d1c7;font:11px var(--mono)}
+.flow-note{padding:clamp(18px,2vw,34px);display:flex;flex-direction:column;min-width:0}
+.flow-progress{display:flex;align-items:center;gap:11px;font:11px var(--mono);color:#5a6656}.flow-progress .pips{display:flex;gap:3px}.pips i{width:13px;height:4px;background:#d8dccf}.pips i.past{background:#788873}.pips i.current{background:#aa501d}
+.flow-note h2{margin:22px 0 9px;font-weight:570;letter-spacing:-.05em;font-size:clamp(29px,2.8vw,46px);line-height:.99}
+.flow-desc{font-size:15px;color:#50574d;line-height:1.48;max-width:42ch}
+.flow-payload{border-block:1px solid #d3d8cb;padding:13px 0;margin-top:18px}.flow-field{font-size:12px;color:#57614f;line-height:1.4}.flow-number{display:block;font-size:22px;line-height:1.18;letter-spacing:-.04em;margin:5px 0 0;overflow-wrap:anywhere}
+.flow-ids{display:flex;gap:4px;flex-wrap:wrap;list-style:none;margin:8px 0 0;padding:0}.flow-ids:empty{display:none}.flow-ids li{font:11px var(--mono);border:1px solid #d4dacd;border-radius:3px;text-align:center;min-width:24px;padding:3px 4px;background:#f2f4eb}
+.flow-footnote{font-size:12px;line-height:1.4;margin:12px 0 0;color:#56604f}
+.steps{display:grid;grid-template-columns:repeat(5,1fr);border-top:1px solid #bfc4b6}
+.steps button{position:relative;border-radius:0;background:#f9f9f2;text-align:left;font-size:14px;min-height:54px;border-right:1px solid #d5d9cd;padding:11px clamp(7px,1.5vw,22px);display:flex;align-items:center;gap:10px;font-weight:600;color:#545b4e}.steps button:last-child{border-right:0}
+.steps button span{font:11px var(--mono);color:#64705d}.steps button[aria-current=step]{color:#331f0f;background:#ffe2c6;box-shadow:inset 0 -3px 0 #b65c2d}.steps button[aria-current=step] span{color:#653b22}.steps button:hover{background:#e9ede0}.steps button:focus-visible{outline-offset:-4px}
+.proof-zone{scroll-margin-top:16px;margin-top:24px}.valuation-zone{margin-top:28px;scroll-margin-top:16px}.valuation-zone>.sectionhead{margin-bottom:12px}.valuation-zone>.sectionhead a{font-size:13px}
+#evidence{scroll-margin-top:12px}.holdout{border-left:0}
+@media(max-width:930px){.flow-grid{grid-template-columns:minmax(0,1.8fr) minmax(235px,1fr)}.flow-map{padding:17px 10px 8px}.flow-note{padding:17px}.flow-desc{font-size:14px}.flow-note h2{margin-top:15px}.flow-heading{padding-inline:5px}.flow-number{font-size:19px}.flow-payload{margin-top:12px}}
+@media(max-width:740px){.flow-grid{grid-template-columns:1fr}.flow-note{display:grid;grid-template-columns:1fr 1fr;column-gap:18px;align-content:start}.flow-progress,.flow-note h2,.flow-desc{grid-column:1}.flow-payload{grid-column:2;grid-row:1 / span 3;align-self:center;border:0;border-left:1px solid #cdd2c3;padding:0 0 0 16px;margin:0}.flow-footnote{grid-column:1/-1}.flow-note h2{font-size:27px}.flow-heading h2{font-size:17px}.flow-heading span{font-size:10px}.steps button{justify-content:center;gap:4px;padding:9px 2px;font-size:12px}.steps button span{font-size:9px}.intro{align-items:start;flex-direction:row;flex-wrap:wrap;gap:12px;padding-top:22px}.steps button{flex-direction:column}.flow-map{padding:14px 8px 12px}.flow-desc{font-size:13px}.flow-note{padding:16px}.flow-footnote{margin-top:8px}.flow-heading{margin-bottom:4px}}
+@media(max-width:400px){.wrap{padding-inline:12px}.flow-note{column-gap:10px}.flow-note h2{font-size:24px}.flow-payload{padding-left:9px}.mode{letter-spacing:0}.flow-controls .play{min-height:42px}.flow-heading span{font-size:9px}}
+.route-map{position:relative;isolation:isolate;overflow:hidden;background-color:#18201e;background-image:radial-gradient(#38423d .7px,transparent .85px);background-size:14px 14px;color:#eef2e8;border:1px solid #39423b;border-radius:10px}
+.route-diagram{display:block;width:100%;height:auto;font-family:var(--sans,Arial,sans-serif)}
+.route-diagram text{font-variant-numeric:tabular-nums}
+.route-wire{fill:none;stroke-linecap:round;stroke-linejoin:round;stroke-width:1.6}
+.route-wire.route-public{stroke:#85988c}
+.route-wire.route-return{stroke:#9aada0;stroke-dasharray:4 5;stroke-width:1.2}
+.route-wire.route-private{stroke:#b67a51;stroke-width:2}
+.route-map[data-step="2"] .route-wire.route-private{stroke:#ffaf71;stroke-width:2.6}
+.route-wire.route-active{stroke:#c0d6bf}
+.route-glyph{stroke:#e4ece0;fill:none;stroke-width:1.7;stroke-linejoin:round;stroke-linecap:round}
+.route-node-box{fill:#25312a;stroke:#687b6d;stroke-width:1.4}
+.route-node.route-node-active .route-node-box{stroke:#b5cdaf;fill:#2d3c31}
+.route-node.route-receiving .route-node-box{fill:#40332a;stroke:#f7aa75}
+.route-node.route-receiving .route-glyph{stroke:#ffc397}
+.route-title{font-weight:650;letter-spacing:-.3px;font-size:17px;fill:#f3f5ef}
+.route-role{font-family:var(--mono,monospace);font-size:10px;fill:#bfc9bf}
+.route-label{font-size:12px;fill:#d3ded1;paint-order:stroke;stroke:#18201e;stroke-width:4px;stroke-linejoin:round}
+.route-label.route-warm{fill:#ffc79d;font-weight:600}
+.route-inbox{background:#1d2521;border-top:1px solid #39443b;display:flex;align-items:center;gap:12px;padding:12px clamp(14px,2.2vw,27px);font-family:var(--mono,monospace);font-size:11px}
+.route-inbox-label{font-family:var(--sans,Arial,sans-serif);font-size:13px;font-weight:600;color:#e0e7dc}
+.route-inbox-slots{display:flex;gap:4px;align-items:center;flex-wrap:wrap}
+.route-slot{height:17px;line-height:15px;min-width:25px;text-align:center;font:10px/15px var(--mono,monospace);border:1px dashed #69766a;border-radius:3px;color:#c4ccc2}
+.route-slot.route-filled{border-style:solid;border-color:#a87853;background:#48372b;color:#ffcfab}
+.route-inbox-count{margin-left:auto;color:#c6d0c4;white-space:nowrap}
+@media(max-width:600px){.route-inbox{flex-wrap:wrap;gap:6px 10px}.route-inbox-label{order:0}.route-inbox-count{order:1}.route-inbox-slots{order:2;width:100%}.route-slot{min-width:22px}.route-title{font-size:14px}.route-role{font-size:10px}.route-label{font-size:10.5px}}
+.mt-section{margin:32px 0;color:#232b24}
+.mt-heading{display:flex;justify-content:space-between;align-items:end;gap:24px;margin-bottom:16px}
+.mt-heading h2{font-size:clamp(24px,2.6vw,35px);line-height:1.07;letter-spacing:-.045em;font-weight:610}
+.mt-heading p{color:#576055;max-width:66ch;font-size:14px;line-height:1.5;margin:7px 0 0}
+.mt-picker{color:#535f52;display:flex;flex-direction:column;gap:5px;font-size:12px;white-space:nowrap;font-weight:560}
+.mt-picker select{font:550 13px var(--mono,monospace);color:#243023;background:#fffef8;border:1px solid #b4b9a9;border-radius:5px;min-height:42px;padding:7px 30px 7px 11px}
+.mt-picker select:focus-visible,.mt-steps button:focus-visible,.mt-hashes summary:focus-visible{outline:3px solid #a55424;outline-offset:2px}
+.mt-frame{display:grid;grid-template-columns:minmax(0,2fr) minmax(220px,.85fr);border:1px solid #ced1c4;border-radius:9px;overflow:hidden;background:#fcfcf7}
+.mt-plot{display:flex;min-width:0;flex-direction:column;justify-content:center;padding:16px 16px 9px;background-color:#f1f3e9;background-image:radial-gradient(#daddd0 .7px,transparent .9px);background-size:10px 10px}
+.mt-labels{display:flex;align-items:center;gap:14px;flex-wrap:wrap;color:#465143;font-size:11px}
+.mt-labels span{display:inline-flex;align-items:center;gap:6px}.mt-labels span:last-child{margin-left:auto;font-family:var(--mono,monospace);color:#5d6758}
+.mt-labels i{width:9px;height:9px;background:#a34e25;border-radius:50%;display:inline-block}
+.mt-labels .mt-sibling-key{background:#a2ba93;border:1px solid #697f60;border-radius:1px}
+#mt-map{width:100%;height:auto;min-height:150px;display:block}
+.mt-detail{min-width:0;padding:15px 18px;border-left:1px solid #d2d5c9}
+.mt-steps{display:flex;align-items:center;justify-content:space-between;gap:6px}
+.mt-steps strong{font-weight:640;font-size:15px}.mt-steps>div{display:flex;gap:4px}
+.mt-steps button{display:grid;place-items:center;background:transparent;border:1px solid #b5bdad;border-radius:5px;width:38px;height:36px;cursor:pointer;color:#243023}
+.mt-steps button svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.7}
+.mt-steps button:hover:enabled{background:#e5eadc}.mt-steps button:disabled{opacity:.34;cursor:default}
+.mt-pair{display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px;align-items:baseline;font-size:12px;padding:8px 0;border-bottom:1px solid #e2e4da}
+.mt-pair code{justify-self:end;font:11px var(--mono,monospace);color:#56614f}
+.mt-pair.mt-output{border-bottom:0;font-weight:650}.mt-pair.mt-output code{color:#9a411d}
+details.mt-hashes{border:0;margin:4px 0 0}.mt-hashes summary{padding:4px 0;font-size:12px;color:#4a5946;font-weight:540;text-decoration:underline;text-underline-offset:3px}
+.mt-hashes dl{margin:4px 0 0}.mt-hashes dt{font-size:11px;color:#53604f;margin-top:6px}.mt-hashes dd{margin:1px 0;overflow-wrap:anywhere;font:11px/1.45 var(--mono,monospace)}
+.mt-verify{margin:10px 0 0;display:flex;align-items:baseline;gap:7px;color:#42503c;font-size:13px;line-height:1.5;overflow-wrap:anywhere}
+.mt-verify::before{content:"";flex:0 0 7px;width:7px;height:7px;background:#96a08c;border-radius:50%}
+.mt-verify[data-state="ok"]::before{background:#497948}.mt-verify[data-state="error"]::before{background:#b74625}
+.mt-verify code{font:12px var(--mono,monospace)}
+@media(max-width:800px){.mt-frame{grid-template-columns:minmax(0,1.6fr) minmax(210px,1fr)}.mt-detail{padding:12px}}
+@media(max-width:660px){.mt-heading{align-items:start;flex-wrap:wrap;gap:11px}.mt-frame{grid-template-columns:1fr}.mt-detail{border:0;border-top:1px solid #d2d5c9;padding:12px 15px}.mt-steps button{width:42px;height:42px}.mt-picker{flex-direction:row;align-items:center;gap:8px}.mt-plot{padding:13px 9px 5px}.mt-labels{gap:9px;font-size:10px}.mt-heading h2{font-size:27px}.mt-section{margin:23px 0}.mt-verify{align-items:start}.mt-verify:before{margin-top:6px}}
+.route-slot{background:transparent;height:30px;min-width:32px;padding:3px;cursor:pointer;font-size:12px}.route-slot:disabled{cursor:default}.route-slot:enabled:hover{background:#754727;border-color:#ffc08e}.mt-row-readout{font:12px/1.5 var(--mono);color:#475540;margin:0 0 8px}.flow-deep{margin-top:9px;font-size:13px;font-weight:600;align-self:flex-start}.flow-deep[hidden]{display:none}
+@media(max-width:740px){.flow-deep{grid-column:1/-1}.route-slot{min-width:26px}.flow-note{padding-bottom:13px}}
 </style>
 </head>
 <body>
-<header><div class="wrap bar"><a class="brand" href="#console"><span class="symbol" aria-hidden="true"><i></i><i></i><i></i></span> Proofdesk</a><nav aria-label="Workspace"><a href="#console">Buyer console</a><a id="prooflink" href="#evidence">Evidence</a></nav><div class="mode"><span class="dot"></span>Offline replay</div></div></header>
+<header><div class="wrap bar"><a class="brand" href="#console"><span class="symbol" aria-hidden="true"><i></i><i></i><i></i></span> Proofdesk</a><nav aria-label="Workspace"><a href="#exchange">Exchange</a><a href="#merkle">Proof tree</a><a href="#valuation">Valuation</a><a id="prooflink" href="#evidence">Evidence</a></nav><div class="mode"><span class="dot"></span>BTC simulation</div></div></header>
 <main class="wrap" id="console">
-<section class="intro"><div><h1>Buyer console</h1><p>Follow a data-buying agent from its first verified sample to its final decision.</p></div><button id="play" class="play"><svg viewBox="0 0 14 14" aria-hidden="true"><path fill="currentColor" d="M3 1.5 12 7l-9 5.5z"/></svg><span>Replay decision</span></button></section>
+<section class="intro" id="exchange">
+  <div><h1>Sample exchange</h1><p>Follow eight BTC–USD training rows from the seller’s API to the buyer agent.</p></div>
+  <div class="flow-controls"><button id="play" class="play" type="button"><svg viewBox="0 0 16 16" aria-hidden="true"><path id="play-icon" fill="currentColor" d="M3 2 13 8 3 14z"/></svg><span>Play exchange</span></button></div>
+</section>
+<section class="flow-frame" aria-label="Interactive BTC sample exchange">
+  <div class="flow-grid">
+    <div class="flow-map"><div class="flow-heading"><h2>Exchange map</h2><span>BTC / USD · 64 records</span></div>
+<div class="route-map" id="route-map">
+  <svg class="route-diagram" role="img" aria-labelledby="route-title route-desc">
+    <title id="route-title">Path of the BTC data sample</title>
+    <desc id="route-desc">The seller posts its Merkle root on Arc. The buyer pays for a draw. The seller API sends the eight selected rows and their proofs directly to the buyer.</desc>
+  </svg>
+  <div class="route-inbox" aria-label="Buyer agent's sample inbox">
+    <span class="route-inbox-label">Agent inbox</span>
+    <span class="route-inbox-slots" role="group" aria-label="Inspect a delivered row"></span>
+    <span class="route-inbox-count"></span>
+  </div>
+</div>
+
+    </div>
+    <aside class="flow-note" aria-label="Current exchange step">
+      <div class="flow-progress"><span id="step-counter"></span><span class="pips" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span></div>
+      <h2 id="step-title" aria-live="polite"></h2><p class="flow-desc" id="step-desc"></p>
+      <div class="flow-payload"><div class="flow-field" id="payload-label"></div><strong class="flow-number" id="payload-value"></strong><ul class="flow-ids" id="payload-ids" aria-label="Selected row indices"></ul></div>
+      <p class="flow-footnote" id="step-foot"></p><a class="flow-deep" id="flow-deep" href="#merkle">Inspect a proof ↓</a>
+    </aside>
+  </div>
+  <div class="steps" role="group" aria-label="Jump to a step">
+    <button type="button" data-step="0"><span>01</span>Commit</button><button type="button" data-step="1"><span>02</span>Draw</button><button type="button" data-step="2"><span>03</span>Deliver</button><button type="button" data-step="3"><span>04</span>Verify</button><button type="button" data-step="4"><span>05</span>Decide</button>
+  </div>
+</section>
+<section class="proof-zone" id="proof-inspector" aria-label="Merkle proof inspector">
+<section class="mt-section" id="merkle" aria-labelledby="mt-title">
+  <div class="mt-heading">
+    <div><h2 id="mt-title">Inside the Merkle proof</h2><p>Follow one sample from its row hash to the root the seller committed. Each join uses one hash supplied by the API.</p></div>
+    <label class="mt-picker">Inspect sample<select id="mt-row"></select></label>
+  </div>
+  <p class="mt-row-readout" id="mt-received"></p>
+  <div class="mt-frame">
+    <div class="mt-plot">
+      <div class="mt-labels"><span><i class="mt-active-key"></i>Selected path</span><span><i class="mt-sibling-key"></i>Sibling hash</span><span>64 leaves</span></div>
+      <svg id="mt-map" role="img" viewBox="0 0 640 204" preserveAspectRatio="xMidYMid meet"></svg>
+    </div>
+    <div class="mt-detail">
+      <div class="mt-steps">
+        <strong id="mt-step-name"></strong>
+        <div><button id="mt-prev" type="button" aria-label="Previous hash join"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="m10 3-5 5 5 5"/></svg></button><button id="mt-next" type="button" aria-label="Next hash join"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="m6 3 5 5-5 5"/></svg></button></div>
+      </div>
+      <div id="mt-inputs"></div>
+      <details class="mt-hashes"><summary>Full hashes for this join</summary><dl id="mt-full-hashes"></dl></details>
+    </div>
+  </div>
+  <p class="mt-verify" id="mt-status" aria-live="polite"></p>
+</section>
+
+</section>
+<section class="valuation-zone" id="valuation"><div class="sectionhead"><h2>What the sample is worth</h2></div>
 <div class="grid">
 <section class="market" aria-label="Market sample"><div class="panelhead"><div class="instrument"><span class="coin" aria-hidden="true">₿</span><div><h2>BTC / USD</h2><small>Coinbase Exchange · Hourly candles</small></div></div><span class="chip">Jan 2024</span></div><div class="chartheading"><strong>Sampled hourly ranges</strong><span>BASIS POINTS</span></div><svg class="chart" id="chart" viewBox="0 0 680 178" role="img" aria-label="Hourly price range at each of eight chain-selected positions in the 64-row listing"></svg><div class="legend"><span><i class="key"></i>Verified sample</span><span><i class="key hidden"></i>Withheld</span><span class="count" id="count"></span></div></section>
 <section class="decision" id="decision"><div class="cardhead"><h2>Agent decision</h2><span class="eyebrow">Seed 26</span></div><div class="reward"><span>Reward per bp saved</span><div class="toggle" aria-label="Reward per basis point"><button data-reward="0.10">0.10</button><button data-reward="0.20">0.20</button></div></div><div class="verdict" id="verdict"></div><p class="explain" id="explain"></p><div class="metrics"><div class="metrichead"><span>Value of 56 more rows</span><b id="value"></b></div><div class="meter"><i id="valuebar"></i></div><div class="metrichead"><span>Full price + gas</span><b id="cost"></b></div><div class="meter cost"><i id="costbar"></i></div><span class="unit">Amounts in test USDC</span></div></section></div>
-<section class="trace"><div class="sectionhead"><h2>Run trace</h2><span class="runstate" aria-live="polite" id="stage"></span></div><div class="tracegrid"><div class="track"><div class="tracktitle"><svg viewBox="0 0 20 20" aria-hidden="true"><rect x="4" y="4" width="12" height="12" rx="3"/><path d="M8 8h4v4H8zM7 1v3m6-3v3M7 16v3m6-3v3M1 7h3m-3 6h3m12-6h3m-3 6h3"/></svg>Agent view</div><ol id="agent"></ol></div><div class="track"><div class="tracktitle"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m10 2 7 4v8l-7 4-7-4V6l7-4zm0 8 7-4m-7 4L3 6m7 4v8"/></svg>Transaction view <span class="eyebrow">Simulated</span></div><ol id="ledger"></ol></div></div><p class="holdout" id="holdout" hidden></p></section>
+<p class="holdout" id="holdout" hidden></p></section>
 <details id="evidence"><summary>Inspect sample &amp; payment evidence</summary><div class="proofgrid"><div><h3>Verified sample rows</h3><p>Current range is the training label. The prior hour’s range is the model input.</p><table><thead><tr><th>Index</th><th>Hour (UTC)</th><th>Prior bp</th><th>Current bp</th></tr></thead><tbody id="rows"></tbody></table></div><div><h3>BTC listing commitment</h3><code id="root"></code><p>Eight Merkle proofs were checked when these replay receipts were built. Only those eight rows are embedded here.</p><button id="verify" class="play">Verify eight proofs</button><p id="proof-result" aria-live="polite"></p><h3>Recorded Arc testnet payment</h3><p>The Chicago taxi preview demonstrates a real 0.01 test-USDC payment. This BTC presentation replays simulated transactions.</p><p><a href="https://explorer.testnet.arc.io/tx/0x06d228d192e63d666687d30c62f0fcbf65265a020c57abe83980f9a067946153" target="_blank" rel="noopener">Open Chicago payment ↗</a></p><button class="play" id="draw-replay">Reproduce Chicago draw</button><p id="draw-result" aria-live="polite">Replay the selection offline from the recorded commitment, payment hash and future block hash.</p></div></div></details><footer>Proofdesk / UBC26 · BTC–USD data market</footer></main>
 <script type="application/json" id="recorded-runs">{"runs":{"0.10":{"mode":"simulated","seed":26,"root":"5f87d674ebc42f322b09aea47574f61f18563291d87424f332b6a7304d2b6529","indices":[33,10,14,40,54,26,41,51],"valuation":{"decision":"pass","estimated_value_base_units":"88281250000000000","price_base_units":"100000000000000000","gas_base_units":"1000000000000000","total_cost_base_units":"101000000000000000","budget_base_units":"200000000000000000","reward_base_units_per_bp":"100000000000000000","historical_draws":48,"matched_draws":8,"positive_matched_draws":5,"historical_mean_gain_bps":0.8828125,"preview_within_calibration_range":true}},"0.20":{"mode":"simulated","seed":26,"root":"5f87d674ebc42f322b09aea47574f61f18563291d87424f332b6a7304d2b6529","indices":[33,10,14,40,54,26,41,51],"valuation":{"decision":"buy","estimated_value_base_units":"176562500000000000","price_base_units":"100000000000000000","gas_base_units":"1000000000000000","total_cost_base_units":"101000000000000000","budget_base_units":"200000000000000000","reward_base_units_per_bp":"200000000000000000","historical_draws":48,"matched_draws":8,"positive_matched_draws":5,"historical_mean_gain_bps":0.8828125,"preview_within_calibration_range":true},"outcome":{"holdout_rows":64,"retained_mae_bps":39.125,"full_mae_bps":41.75,"realized_gain_bps":-2.625}}},"samples":[{"index":33,"row":["BTC-USD:1h:1704880800",83,44],"proof":["18694843ea132f408e675572b72c80e1549c5b681dda221cfe54caef3fc0ce45","d176dcdd2e0191e4ade90f877aba6785dd1f01668da611934a48bd93af487a70","363f1a7225892119bf29b23be05d912362ade71d5c75364c07783055db5b684e","ddcfaac40c90bf880fba4bc672951469e31fe0c394008377709557eb4e4b8b63","d52238fa27455cc89337f75d253b5828d90c61ec51ae43eb44e698aed4d981b9","069bc6790ca9cc26eb1902be3bee9dc0da9f953ac6ee17a52efbe06d210951d1"]},{"index":10,"row":["BTC-USD:1h:1704798000",64,48],"proof":["394103234243b6764cdd835046bcb5b67b9981807d0c9dfdf64648d437d6396b","98305cb1a09de2fe6130935ecfb1c50e01f10bc706ab699c853721b8d0624ae7","01c608a5a4a6b5a7920f0e50949d9f51fee63403413d198b1c900a173477b758","97bf9bdc6ca7b365d1f78dd106083828e102c677724f9775c0819eed67b9b4e5","5ec9757a4e1ef163e93e242b536fc58cef59bb5c50cc6a3f0018bb27b8f1bc7e","6c93ab1870f893fdb701089da4658e2108bc01f99c2f121df5214af3d629e032"]},{"index":14,"row":["BTC-USD:1h:1704812400",113,127],"proof":["9ec0ff48e8b1a7947a1a2fbf91c28cebbc73b6c2fcd68b7000c5f83edaed1820","3047eba80c213e97652010b051a5d0eebddca260169c4c46e232b319fe1d961c","80a49989a285492787cef09a1bf1c18a46cff20bf0f170ecd634a8d7d301c89a","97bf9bdc6ca7b365d1f78dd106083828e102c677724f9775c0819eed67b9b4e5","5ec9757a4e1ef163e93e242b536fc58cef59bb5c50cc6a3f0018bb27b8f1bc7e","6c93ab1870f893fdb701089da4658e2108bc01f99c2f121df5214af3d629e032"]},{"index":40,"row":["BTC-USD:1h:1704906000",116,273],"proof":["c294a17fdca259d04ac6ef156f6ae3a9d6d43c1f94f3eb9b69d4e8e5051efead","44f49424646bd902d3b1fe1873d0d658550804f99ca92174b73a509b7c37bb71","00bec7fe18eab23faa480da4119eae2e7449119cdfae38c77138187b05ab4a7e","e40b015cdc893f7ac9e744bccff75b88d827362873d4abdd674d139f9880f9ce","d52238fa27455cc89337f75d253b5828d90c61ec51ae43eb44e698aed4d981b9","069bc6790ca9cc26eb1902be3bee9dc0da9f953ac6ee17a52efbe06d210951d1"]},{"index":54,"row":["BTC-USD:1h:1704956400",105,62],"proof":["aa88bc8bdaea42a50551e6a491759dba0ea3a955e82dc0608615d149ed1e8bc4","5db8f90d08d46206891cce3df4b61071ef921a43384e6c7a5f971cc3fbb7cba5","7ea0c45b0caa6db65c8a04522f22512330e0f26f6b0d421a5529aea261064fd0","60d8a2343dda5a10c7836d8f445a72bfc02b66d5aebb231a8ff0fe9230695e2b","b939a9952bd22fc3fc853a252704034ef2080ed929517addbfa12b05d685e6e9","069bc6790ca9cc26eb1902be3bee9dc0da9f953ac6ee17a52efbe06d210951d1"]},{"index":26,"row":["BTC-USD:1h:1704855600",47,62],"proof":["db0c5a3f00e186146c633fd86dcac5fa993e432dbd58c98e57c55ff5f602ddcf","70001db53b1699bdf358e02d076d3365e956a13f5f0c3db36a1edcdd42eb1d37","fe24b95f4a3b45f291a3f3583bf1f86026e1fd9fc07693a3c8773442591016c1","43b59660ac8162fdb0a02afe282f796db0df488b0078704159eb6b84081c4732","f3e8e2e726a9e2de95c6900a93879493fb93ed5daa94b59ac1c1c3cae84abc9d","6c93ab1870f893fdb701089da4658e2108bc01f99c2f121df5214af3d629e032"]},{"index":41,"row":["BTC-USD:1h:1704909600",273,163],"proof":["de98f1ccb8211b31efebd40a0dfc279fb2f83a64bd5da4304ec689fdb6637e88","44f49424646bd902d3b1fe1873d0d658550804f99ca92174b73a509b7c37bb71","00bec7fe18eab23faa480da4119eae2e7449119cdfae38c77138187b05ab4a7e","e40b015cdc893f7ac9e744bccff75b88d827362873d4abdd674d139f9880f9ce","d52238fa27455cc89337f75d253b5828d90c61ec51ae43eb44e698aed4d981b9","069bc6790ca9cc26eb1902be3bee9dc0da9f953ac6ee17a52efbe06d210951d1"]},{"index":51,"row":["BTC-USD:1h:1704945600",85,42],"proof":["facb3ff7addc2bea91a76ec0f0aa8652118ba28f035cac5a33c27cc8bfed3d4d","4603152cd428d7df3c7f7b5e617836de1cf0cb5eac2dd6ad2ea8dd322146f3a1","c758aca4b295ea946818b8228a0928ae924235994292cd27e5b0ef7086acdf8b","60d8a2343dda5a10c7836d8f445a72bfc02b66d5aebb231a8ff0fe9230695e2b","b939a9952bd22fc3fc853a252704034ef2080ed929517addbfa12b05d685e6e9","069bc6790ca9cc26eb1902be3bee9dc0da9f953ac6ee17a52efbe06d210951d1"]}],"chicago":{"version":1,"chain_id":5042002,"root":"0541c018390b0a6a8108260ea7cd44d5cbb67cbe0149259ecd2aec7de0cbb004","indices":[28,44,56,62,25,53,10,46],"seller":"0xbdaf6907e159e633939e9db63adc35b2045db61f","buyer":"0x565ff030eba37c58a595118f3cc6a3d341b6b414","listing_tx":"0xac99b6dd2748c309d34b7b4d77055ad0bc13ced6ec14ec6a336b66366d2e4159","request_tx":"0x06d228d192e63d666687d30c62f0fcbf65265a020c57abe83980f9a067946153","fee_base_units":"10000000000000000","request_gas_fee_base_units":"573000000000000","buyer_total_base_units":"10573000000000000","listing_block":72891028,"listing_block_hash":"0x57c327eaca66e4ab9b0a052c10a5b4552166c269f19e97ac6653ccea690c2c16","request_block":72891092,"request_block_hash":"0xfc4a94d885cab999b27edd4a58fdb5429839dba50848004799c7189fe82b9a2a","draw_block":72891094,"draw_block_hash":"0xf5646eca16a2af3144ece774b86b9a85366c9d7448fd2b3522b0c5b1f27a732c"}}</script>
 <script>
@@ -70,17 +208,7 @@ function drawChart(show) {
   }
   el("count").textContent=(show?"08":"00")+" / 64 visible";
 }
-let reward="0.10", phase=4, timer;
-function lines(id,items){
-  el(id).replaceChildren();
-  items.forEach((text,i)=>{
-    const li=document.createElement("li"), seq=document.createElement("span");
-    seq.textContent=String(i+1).padStart(2,"0");
-    li.append(seq,document.createTextNode(i<phase?text:"Waiting…"));
-    if(i>=phase)li.className="pending";
-    el(id).appendChild(li);
-  });
-}
+let reward="0.10", phase=2;
 function render() {
   const run=data.runs[reward], v=run.valuation, buy=v.decision==="buy";
   const value=money(v.estimated_value_base_units), cost=money(v.total_cost_base_units);
@@ -93,15 +221,7 @@ function render() {
   el("valuebar").style.width=valued?100*Math.min(value/.20,1)+"%":"0";
   el("cost").textContent=cost.toFixed(3);
   el("costbar").style.width=100*Math.min(cost/.20,1)+"%";
-  el("stage").textContent=["Ready","1 / 4 · Listing","2 / 4 · Preview","3 / 4 · Pricing","4 / 4 · Complete"][phase];
-  el("play").querySelector("span").textContent=complete?"Replay decision":"Restart replay";
   drawChart(phase>=2);
-  lines("agent",["Inspect a listing of 64 BTC–USD training rows.","Verify 8 selected rows against the seller’s root.",
-    "Estimate "+v.historical_mean_gain_bps.toFixed(3)+" bp less error from the full set.",
-    buy?"Buy the remaining rows and score the delivered model.":"Keep the eight rows and pass on the full dataset."]);
-  lines("ledger",["Seller anchors the listing’s Merkle root.","Preview fee: 0.010 test USDC. A future block fixes the draw.",
-    "Full offer: 0.100 + 0.001 estimated gas.",
-    buy?"Full payment simulated. All 64 delivered rows verified.":"Full payment skipped. No purchase gas spent."]);
   el("holdout").hidden=!(complete && buy);
   if(complete && buy){
     const o=run.outcome;
@@ -123,21 +243,11 @@ async function verifyEvidence() {
   button.disabled=true;
   try {
     const reference=data.runs[reward], ids=reference.indices;
-    const enc=new TextEncoder();
-    const hash=async bytes=>new Uint8Array(await crypto.subtle.digest("SHA-256",bytes));
     if(samples.length!==8 || new Set(ids).size!==8 || new Set(samples.map(s=>s.index)).size!==8) throw Error();
     for(const sample of samples) {
-      let i=sample.index;
-      if(!Number.isInteger(i)||i<0||i>=64||!ids.includes(i)||sample.proof.length!==6) throw Error();
-      let node=await hash(enc.encode("row:"+JSON.stringify([i,...sample.row])));
-      for(const hex of sample.proof){
-        if(!/^[a-f0-9]{64}$/.test(hex)) throw Error();
-        const sibling=Uint8Array.from(hex.match(/../g),c=>parseInt(c,16));
-        const bytes=new Uint8Array(69);bytes.set(enc.encode("node:"));
-        bytes.set(i%2?sibling:node,5);bytes.set(i%2?node:sibling,37);
-        node=await hash(bytes);i=Math.floor(i/2);
-      }
-      if(Array.from(node,b=>b.toString(16).padStart(2,"0")).join("")!==reference.root) throw Error();
+      if(!ids.includes(sample.index)) throw Error();
+      const joins=await mtProofSteps(sample);
+      if(joins[5].parent!==reference.root) throw Error();
     }
     output.textContent="Verified 8 of 8 against the BTC listing root in this browser.";
   } catch {output.textContent="Verification failed. A row or proof differs from the listing commitment.";}
@@ -170,15 +280,336 @@ async function replayChicago(){
   finally {button.disabled=false;}
 }
 el("draw-replay").addEventListener("click",replayChicago);
-function replay(){
-  clearInterval(timer);phase=1;render();
-  timer=setInterval(()=>{phase++;render();if(phase===4)clearInterval(timer);},1600);
+const handoffMap = (() => {
+  const map = document.getElementById("route-map");
+  const svg = map.querySelector(".route-diagram");
+  const ns = "http://www.w3.org/2000/svg";
+  const reduce = window.matchMedia("(prefers-reduced-motion: reduce)");
+  const drawOrder = data.runs["0.10"].indices;
+  const slots = map.querySelector(".route-inbox-slots");
+  const counter = map.querySelector(".route-inbox-count");
+  const marks = drawOrder.map(index => {
+    const slot = document.createElement("button");
+    slot.type="button";
+    slot.setAttribute("aria-label","Inspect delivered row "+index);
+    slot.addEventListener("click",()=>{
+      stopFlow();
+      flowStep=3; pristine=false;
+      showFlow();
+      el("mt-row").value=String(index);
+      el("mt-row").dispatchEvent(new Event("change"));
+      el("mt-row").focus({preventScroll:true});
+      el("merkle").scrollIntoView({block:"start",behavior:reduce.matches?"instant":"smooth"});
+    });
+    slot.className = "route-slot";
+    slots.append(slot);
+    return slot;
+  });
+  let step = -1, playing = false, fraction = 0, frame = 0, lastCount = -1;
+  let compact, paths, particles;
+  function part(parent, name, attrs = {}, text) {
+    const node = document.createElementNS(ns, name);
+    Object.entries(attrs).forEach(([k,v]) => node.setAttribute(k,String(v)));
+    if(text !== undefined) node.textContent=text;
+    parent.append(node);
+    return node;
+  }
+  function inbox(received) {
+    if(received===lastCount)return;
+    lastCount=received;
+    marks.forEach((slot,i)=>{
+      slot.classList.toggle("route-filled",i<received);
+      slot.disabled=i>=received;
+      slot.textContent=i<received?String(drawOrder[i]).padStart(2,"0"):"·";
+    });
+    counter.textContent=received+" / 8 rows";
+  }
+  function node(layer,x,y,kind,title,role,active) {
+    const g=part(layer,"g",{class:"route-node"+(active?" route-node-active":"")+(kind==="agent"&&step>=2?" route-receiving":""),transform:"translate("+x+" "+y+")"});
+    const r=compact?21:25;
+    part(g,"rect",{class:"route-node-box",x:-r,y:-r,width:2*r,height:2*r,rx:9});
+    const glyph=part(g,"g",{class:"route-glyph"});
+    if(kind==="seller") {
+      part(glyph,"ellipse",{cx:0,cy:-8,rx:11,ry:4});
+      part(glyph,"path",{d:"M-11 -8v15c0 5 22 5 22 0V-8 M-11 -1c0 5 22 5 22 0"});
+    } else if(kind==="arc") {
+      part(glyph,"path",{d:"M0 -12 12 -5 0 2 -12 -5Z M-12 0 0 7 12 0 M-12 5 0 12 12 5"});
+    } else {
+      part(glyph,"rect",{x:-9,y:-9,width:18,height:18,rx:4});
+      part(glyph,"path",{d:"M-4 -13v4m8-4v4m-8 18v4m8-4v4M-13 -4h4m-4 8h4M9 -4h4m-4 8h4 M-4 -3l3 3-3 3m5 0h3"});
+    }
+    part(g,"text",{class:"route-title",x:0,y:r+19,"text-anchor":"middle"},title);
+    part(g,"text",{class:"route-role",x:0,y:r+35,"text-anchor":"middle"},role);
+  }
+  function layout() {
+    compact=map.clientWidth<560;
+    const w=compact?340:760, h=compact?218:235;
+    const mid=w/2,l=compact?49:91,r=w-l;
+    const top=compact?32:40, y=compact?144:153, radius=compact?21:25;
+    svg.setAttribute("viewBox","0 0 "+w+" "+h);
+    svg.querySelectorAll("g[data-route],defs").forEach(n=>n.remove());
+    const defs=part(svg,"defs");
+    for(const [key,col] of [["public","#a3b6a7"],["private","#ffb67e"]]){
+      const marker=part(defs,"marker",{id:"route-arrow-"+key,viewBox:"0 0 8 8",refX:7,refY:4,markerWidth:6,markerHeight:6,orient:"auto-start-reverse"});
+      part(marker,"path",{d:"M1 1l6 3-6 3",stroke:col,"stroke-width":1.3,fill:"none"});
+    }
+    const group=part(svg,"g",{"data-route":""});
+    function wire(key,d,kind,active) {
+      return part(group,"path",{id:"route-wire-"+key,d,class:"route-wire route-"+kind+(active?" route-active":""),"marker-end":"url(#route-arrow-"+(kind==="private"?"private":"public")+")"});
+    }
+    paths={};
+    const lx=l-7, rx=r+7, turns=8, leftArc=mid-radius-4, rightArc=mid+radius+4;
+    paths.commit=wire("commit",`M${lx} ${y-radius-3}V${top+turns}Q${lx} ${top} ${lx+turns} ${top}H${leftArc}`,"public",step===0);
+    paths.pay=wire("pay",`M${rx} ${y-radius-3}V${top+turns}Q${rx} ${top} ${rx-turns} ${top}H${rightArc}`,"public",step===1);
+    const rail=top+12, inner=compact?13:18;
+    paths.indices=wire("indices",`M${leftArc} ${rail}H${l+inner+turns}Q${l+inner} ${rail} ${l+inner} ${rail+turns}V${y-radius-3}`,"return",step===1);
+    paths.read=wire("read",`M${rightArc} ${rail}H${r-inner-turns}Q${r-inner} ${rail} ${r-inner} ${rail+turns}V${y-radius-3}`,"return",step===1);
+    paths.request=wire("request",`M${r-radius-7} ${y-10}H${l+radius+6}`,"return",step===2);
+    paths.delivery=wire("delivery",`M${l+radius+3} ${y}H${r-radius-4}`,"private",false);
+    const text=(x,yy,value,warm=false)=>part(group,"text",{class:"route-label"+(warm?" route-warm":""),x,y:yy,"text-anchor":"middle"},value);
+    text((l+leftArc)/2,top-9,compact?"Root hash":"Root commitment");
+    text((rightArc+r)/2,top-9,compact?"Payment":"Preview payment");
+    text((l+leftArc)/2,rail+17,"Draw indices");
+    text((rightArc+r)/2,rail+17,"Draw indices");
+    text(mid,y-19,"Request paid preview");
+    text(mid,y+20,"Private · 8 rows + proofs",true);
+    node(group,l,y,"seller","Seller API","64-row listing",step===0||step===2);
+    node(group,mid,top,"arc","Arc testnet","Simulated",step<2);
+    node(group,r,y,"agent","Buyer agent",step===4?"Pricing":step===3?"Proof check":step===2?"Private inbox":"Awaiting data",step>=2);
+    particles=part(group,"g",{"aria-hidden":"true"});
+  }
+  function dot(path,progress,doc) {
+    if(progress<=0||progress>=1)return;
+    const p=path.getPointAtLength(path.getTotalLength()*progress);
+    if(doc){
+      const g=part(particles,"g",{transform:"translate("+p.x+" "+p.y+")"});
+      part(g,"rect",{x:-5,y:-6,width:10,height:12,rx:2,fill:"#ffb47e",stroke:"#493626","stroke-width":1});
+      part(g,"path",{d:"M-2 -2h4m-4 3h4",stroke:"#66452e","stroke-width":1});
+    } else part(particles,"circle",{cx:p.x,cy:p.y,r:3.3,fill:"#d2e7c9",stroke:"#364038","stroke-width":1.2});
+  }
+  function paint() {
+    particles.replaceChildren();
+    if(step===0)dot(paths.commit,fraction,false);
+    if(step===1){
+      dot(paths.pay,fraction/.4,false);
+      dot(paths.indices,(fraction-.4)/.6,false);
+      dot(paths.read,(fraction-.4)/.6,false);
+    }
+    let received=step>2?8:0;
+    if(step===2){
+      dot(paths.request,fraction/.23,false);
+      for(let i=0;i<8;i++){
+        const pos=(fraction-.23-i*.048)/.43;
+        if(pos>=1) received++;
+        else if(pos>0) dot(paths.delivery,pos,true);
+      }
+    }
+    inbox(received);
+  }
+  function update(next,play,restart=false) {
+    const changed=next!==step;
+    cancelAnimationFrame(frame);
+    step=next; playing=Boolean(play);
+    map.dataset.step=String(step);
+    if(changed||restart) fraction=playing&&!reduce.matches?0:1;
+    if(reduce.matches) fraction=1;
+    layout();paint();
+    if(playing&&!reduce.matches&&fraction<1&&step<=2) {
+      const duration=step===2?2450:1550, start=performance.now()-fraction*duration;
+      function tick(now) {
+        fraction=Math.min(1,(now-start)/duration);paint();
+        if(fraction<1) frame=requestAnimationFrame(tick);
+      }
+      frame=requestAnimationFrame(tick);
+    }
+  }
+  new ResizeObserver(()=>{
+    if(step>=0 && compact!==(map.clientWidth<560)){layout();paint();}
+  }).observe(map);
+  reduce.addEventListener("change",()=>{if(step>=0)update(step,playing);});
+  return update;
+})();
+function updateRoute(step,playing,restart=false){handoffMap(step,playing,restart);}
+
+const mtState={sample:null,join:0,steps:[],revision:0,timer:null,following:false};
+const mtHex=bytes=>Array.from(bytes,b=>b.toString(16).padStart(2,"0")).join("");
+const mtShort=value=>value.slice(0,6)+"…"+value.slice(-5);
+async function mtProofSteps(sample){
+  if(!Number.isInteger(sample.index)||sample.index<0||sample.index>=64||!Array.isArray(sample.row)||sample.proof.length!==6)throw Error("Invalid sample");
+  const enc=new TextEncoder(), sha=async bytes=>new Uint8Array(await crypto.subtle.digest("SHA-256",bytes));
+  let node=await sha(enc.encode("row:"+JSON.stringify([sample.index,...sample.row]))), pos=sample.index;
+  const steps=[];
+  for(const hex of sample.proof){
+    if(!/^[0-9a-f]{64}$/.test(hex))throw Error("Invalid proof hash");
+    const sibling=hashBytes(hex), isRight=Boolean(pos%2);
+    const left=isRight?sibling:node, right=isRight?node:sibling;
+    const pair=new Uint8Array(69);
+    pair.set(enc.encode("node:"));pair.set(left,5);pair.set(right,37);
+    node=await sha(pair);
+    steps.push({left:mtHex(left),right:mtHex(right),parent:mtHex(node),isRight});
+    pos=Math.floor(pos/2);
+  }
+  return steps;
 }
-el("play").addEventListener("click",replay);
-document.querySelectorAll("[data-reward]").forEach(b=>b.addEventListener("click",()=>{
-  clearInterval(timer);reward=b.dataset.reward;phase=4;render();
+function mtMap(){
+  const view=el("mt-map"), row=mtState.sample.index, join=mtState.join;
+  const compact=window.matchMedia("(max-width:660px)").matches, width=compact?340:640;
+  const pad=14, x=(level,i)=>pad+(i+.5)*(2**level)/64*(width-2*pad), y=level=>169-23*level;
+  view.replaceChildren();view.setAttribute("viewBox","0 0 "+width+" 198");
+  view.setAttribute("aria-label","Merkle tree of 64 rows. Row "+row+" joins a sibling six times to reach the root. Showing join "+(join+1)+".");
+  function path(level,i){
+    const parent=Math.floor(i/2);
+    return "M"+x(level,i)+" "+y(level)+" L"+x(level+1,parent)+" "+y(level+1);
+  }
+  const graph=mark(view,"g",{fill:"none",stroke:"#bdc3b3","stroke-width":compact?.8:1.1});
+  for(let level=0;level<6;level++)
+    for(let i=0;i<64/(2**level);i++)mark(graph,"path",{d:path(level,i)});
+  for(let level=0;level<=6;level++)
+    for(let i=0;i<64/(2**level);i++)mark(view,"circle",{cx:x(level,i),cy:y(level),r:compact?1.45:2.2,fill:"#d6ddc9",stroke:"#98a38b","stroke-width":.6});
+  for(let level=0;level<=6;level++){
+    const i=Math.floor(row/2**level);
+    if(level<6){
+      mark(view,"path",{d:path(level,i^1),fill:"none",stroke:"#7c9670","stroke-width":level===join?2.2:1.4});
+      mark(view,"path",{d:path(level,i),fill:"none",stroke:"#a75228","stroke-width":level===join?3.1:2.1});
+      const r=level===join?3.6:2.7;
+      mark(view,"rect",{x:x(level,i^1)-r,y:y(level)-r,width:2*r,height:2*r,rx:.8,fill:"#a3bd93",stroke:"#54734e","stroke-width":1});
+    }
+  }
+  for(let level=0;level<=6;level++){
+    const i=Math.floor(row/2**level);
+    if(level===join+1)mark(view,"circle",{cx:x(level,i),cy:y(level),r:7,fill:"#fbf4df",stroke:"#a75228","stroke-width":1});
+    mark(view,"circle",{cx:x(level,i),cy:y(level),r:level===0||level===6?4.5:3,fill:"#af5b30",stroke:"#94451f","stroke-width":1});
+  }
+  const label=(sx,sy,txt)=>mark(view,"text",{x:sx,y:sy,"text-anchor":"middle",fill:"#374430","font-size":compact?11:12,"font-family":"monospace"},txt);
+  label(width/2,16,"Committed root");
+  label(Math.max(36,Math.min(width-36,x(0,row))),189,"Row "+row);
+}
+function mtDetail(){
+  const step=mtState.steps[mtState.join], n=mtState.join+1;
+  el("mt-step-name").textContent="Join "+n+" of 6";
+  el("mt-prev").disabled=n===1;el("mt-next").disabled=n===6;
+  const inputs=el("mt-inputs"), details=el("mt-full-hashes");inputs.replaceChildren();details.replaceChildren();
+  if(!step)return;
+  const side=mtState.join===0?"row hash":"path hash";
+  const fields=[[step.isRight?"Left · sibling":"Left · "+side,step.left],
+                [step.isRight?"Right · "+side:"Right · sibling",step.right],
+                [n===6?"Computed root":"Parent hash",step.parent]];
+  for(const [i,[name,value]] of fields.entries()){
+    const div=document.createElement("div"), title=document.createElement("span"), code=document.createElement("code");
+    div.className=i===2?"mt-pair mt-output":"mt-pair";title.textContent=name;code.textContent=mtShort(value);div.append(title,code);inputs.append(div);
+    const dt=document.createElement("dt"),dd=document.createElement("dd");dt.textContent=name;dd.textContent=value;details.append(dt,dd);
+  }
+}
+async function mtSelect(){
+  const i=Number(el("mt-row").value), sample=samples.find(s=>s.index===i);
+  if(!sample)return;
+  const revision=++mtState.revision, status=el("mt-status");
+  mtState.sample=sample;mtState.join=0;mtState.steps=[];
+  el("mt-received").textContent="Row "+i+" · "+hourLabel(sample.row)+" UTC · prior range "+(sample.row[1]-1)+" bp · observed range "+(sample.row[2]-1)+" bp";
+  mtMap();mtDetail();
+  status.dataset.state="pending";status.textContent="Computing the six SHA-256 joins…";
+  if(!window.crypto?.subtle){
+    status.dataset.state="error";status.textContent="Hash verification needs Web Crypto. Open the HTML file locally or over HTTPS.";return;
+  }
+  try{
+    const steps=await mtProofSteps(sample);
+    if(revision!==mtState.revision)return;
+    mtState.steps=steps;mtDetail();
+    const run=data.runs["0.10"], valid=steps[5].parent===run.root && run.indices.includes(i);
+    status.dataset.state=valid?"ok":"error";
+    status.textContent=valid?"Verified row "+i+". Six joins reproduce the committed root "+mtShort(run.root)+".":"Verification failed. This path does not match the root or sampled indices.";
+  }catch{
+    if(revision!==mtState.revision)return;
+    status.dataset.state="error";status.textContent="Verification failed. The row or its proof could not be decoded.";
+  }
+}
+function initTree(){
+  const picker=el("mt-row");
+  for(const sample of samples){const option=document.createElement("option");option.value=String(sample.index);option.textContent="Row "+sample.index;picker.append(option);}
+  picker.addEventListener("change",()=>{mtStop();mtSelect();});
+  for(const [key,delta] of [["mt-prev",-1],["mt-next",1]])el(key).addEventListener("click",()=>{
+    mtStop();mtState.join=Math.max(0,Math.min(5,mtState.join+delta));mtMap();mtDetail();
+  });
+  window.matchMedia("(max-width:660px)").addEventListener("change",()=>{if(mtState.sample)mtMap();});
+  picker.value=String(data.runs["0.10"].indices[0]);
+  mtSelect();
+}
+function mtStop(){
+  clearInterval(mtState.timer);
+  mtState.timer=null;
+}
+function updateTree(step,playing,restart=false){
+  const follow=step===3 && playing && !!mtState.sample && !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if(!follow){mtStop();mtState.following=false;return;}
+  if(mtState.following&&!restart)return;
+  mtStop();
+  mtState.following=true;mtState.join=0;mtMap();mtDetail();
+  mtState.timer=setInterval(()=>{
+    if(window.matchMedia("(prefers-reduced-motion: reduce)").matches){mtStop();return;}
+    mtState.join++;mtMap();mtDetail();
+    if(mtState.join===5)mtStop();
+  },650);
+}
+
+let flowStep=2, playing=false, pristine=true, tick;
+function stopFlow(){
+  clearTimeout(tick);
+  playing=false;
+}
+function showFlow(animate=false){
+  const run=data.runs[reward], v=run.valuation, root=run.root;
+  const steps=[
+    ["Commit the listing","The seller hashes 64 rows into one Merkle root and records that root on Arc before the buyer pays.","Seller’s committed root",root.slice(0,8)+"…"+root.slice(-8),"Changing a row would change this fingerprint."],
+    ["Draw the sample","The agent pays the preview fee. The request and a later block determine eight distinct positions in the listing.","Preview payment","0.010 test USDC","Both parties can independently reproduce the draw."],
+    ["Deliver the preview","The agent requests its paid preview. The seller API checks the payment and sends the rows and their proofs directly to the agent.","Private API response","8 rows + proofs","The other 56 rows stay with the seller."],
+    ["Verify each row","The agent hashes each received row and combines it with six sibling hashes. Each path must lead to the seller’s committed root.","Merkle membership","6 joins per row","Choose a sampled row in the proof inspector below."],
+    ["Price the rest","With eight verified rows in hand, the buyer estimates what the remaining 56 could add to its training set.","Agent decision",v.decision==="buy"?"Buy the full dataset":"Keep the preview","Estimated value "+money(v.estimated_value_base_units).toFixed(4)+" · Cost "+money(v.total_cost_base_units).toFixed(3)+" test USDC."]
+  ];
+  phase=[1,1,2,2,4][flowStep];
+  render();
+  const [title,desc,label,value,foot]=steps[flowStep];
+  el("step-counter").textContent="STEP "+(flowStep+1)+" OF 5";
+  el("step-title").textContent=title;el("step-desc").textContent=desc;
+  el("payload-label").textContent=label;el("payload-value").textContent=value;el("step-foot").textContent=foot;
+  el("flow-deep").href=flowStep===4?"#valuation":"#merkle";
+  el("flow-deep").textContent=flowStep===4?"Explore the valuation ↓":"Inspect a proof ↓";
+  el("flow-deep").hidden=flowStep<2;
+  el("payload-ids").replaceChildren();
+  if(flowStep===1||flowStep===2) for(const idx of run.indices){
+    const row=document.createElement("li");row.textContent=String(idx).padStart(2,"0");el("payload-ids").appendChild(row);
+  }
+  document.querySelectorAll(".pips i").forEach((pip,i)=>pip.className=i<flowStep?"past":i===flowStep?"current":"");
+  document.querySelectorAll(".steps button[data-step]").forEach((button,i)=>{
+    if(i===flowStep)button.setAttribute("aria-current","step");else button.removeAttribute("aria-current");
+  });
+  el("play").querySelector("span").textContent=playing?"Pause":pristine?"Play exchange":flowStep===4?"Replay exchange":"Resume";
+  el("play-icon").setAttribute("d",playing?"M3 2h4v12H3zm7 0h4v12h-4z":"M3 2 13 8 3 14z");
+  updateRoute(flowStep,playing||animate,animate);
+  updateTree(flowStep,playing||animate,animate);
+}
+function nextFlow(){
+  clearTimeout(tick);
+  if(playing)tick=setTimeout(()=>{
+    flowStep++;
+    if(flowStep===4)stopFlow();
+    showFlow();
+    if(playing)nextFlow();
+  },[3400,3800,4300,4200][flowStep]);
+}
+el("play").addEventListener("click",()=>{
+  if(playing){stopFlow();showFlow();return;}
+  if(pristine||flowStep===4)flowStep=0;
+  pristine=false;playing=true;showFlow();nextFlow();
+});
+document.querySelectorAll(".steps button[data-step]").forEach(button=>button.addEventListener("click",()=>{
+  stopFlow();pristine=false;flowStep=Number(button.dataset.step);showFlow(true);
+}));
+document.querySelectorAll("[data-reward]").forEach(button=>button.addEventListener("click",()=>{
+  stopFlow();pristine=false;reward=button.dataset.reward;flowStep=4;showFlow();
 }));
 el("prooflink").addEventListener("click",()=>{el("evidence").open=true;});
 window.matchMedia("(max-width:660px)").addEventListener("change",()=>drawChart(phase>=2));
-render();
+initTree();
+showFlow(true);
+
 </script></body></html>
