@@ -6,7 +6,7 @@ import os
 import re
 from pathlib import Path
 
-from arc_draw import RPC_URL, draw_indices, quantity, rpc_client, verify_draw
+from arc_draw import ArcPending, RPC_URL, draw_indices, quantity, rpc_client, verify_draw
 from arc_intent import purchase_wallet_request
 from arc_purchase import FULL_PRICE_BASE_UNITS, verify_offer, verify_purchase
 from btc_value import measured_outcome, price_preview
@@ -121,6 +121,8 @@ def main():
                 result = dict(mode="arc-testnet", draw=draw, purchase=purchase,
                               outcome=measured_outcome(sample, full["rows"], benchmark))
         print(json.dumps(result, indent=2, allow_nan=False))
+    except ArcPending as exc:
+        parser.exit(75, f"{exc}. Repeat this read with the same transaction hashes.\n")
     except (OSError, ValueError, KeyError, IndexError, TypeError) as exc:
         parser.exit(1, f"BTC buyer failed: {exc}\n")
 

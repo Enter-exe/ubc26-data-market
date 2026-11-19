@@ -2,6 +2,7 @@
 import unittest
 from urllib.error import HTTPError
 
+import arc_draw
 from arc_purchase import verify_offer, verify_purchase
 from buyer_sample import fetch_purchase
 from market import tree
@@ -72,6 +73,18 @@ class FullPurchaseTest(unittest.TestCase):
         with seller_endpoint(None, self.deliver) as url:
             for _ in range(2):
                 self.assertEqual(fetch_purchase(url, TOKEN, purchase)["rows"], self.rows)
+
+    def test_unfinalized_purchase_recovers_with_the_same_payment(self):
+        purchase = self.purchase()
+        self.configure(finalized_height=13)
+        with seller_endpoint(None, self.deliver) as url:
+            with self.assertRaises(arc_draw.ArcPending):
+                self.purchase()
+            with self.assertRaises(arc_draw.ArcPending):
+                fetch_purchase(url, TOKEN, purchase)
+            self.configure(finalized_height=14)
+            self.assertEqual(self.purchase(), purchase)
+            self.assertEqual(fetch_purchase(url, TOKEN, purchase)["rows"], self.rows)
 
     def test_private_route_requires_an_offer_a_buyer_token_and_a_valid_payment(self):
         purchase = self.purchase()

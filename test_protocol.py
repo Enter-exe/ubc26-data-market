@@ -6,8 +6,10 @@ from http.server import HTTPServer
 from io import StringIO
 from threading import Thread
 from urllib.error import HTTPError
+from urllib.request import Request, urlopen
 from unittest.mock import patch
 
+import arc_draw
 from arc_draw import verify_draw, verify_listing
 from buyer_sample import fetch_preview
 from chicago_snapshot import build_snapshot
@@ -128,6 +130,34 @@ class ProtocolSmokeTest(unittest.TestCase):
         for sample in samples:
             self.assertEqual(sample["row"], [f"trip-{sample['index']:02d}", 125, 750])
 
+    def test_pending_draw_returns_retry_delay_then_verified_sample_for_same_hash(self):
+        tip = ("eth_getBlockByNumber", ("finalized", False))
+        finalized = self.responses[tip]
+        self.responses[tip] = self.responses["eth_getBlockByNumber", ("0xb", False)]
+        with seller_endpoint(self.deliver) as url:
+            request = Request(url + "/sample/" + REQUEST, headers={"Authorization": "Bearer " + TOKEN})
+            with urlopen(request, timeout=5) as response:
+                self.assertEqual(response.status, 202)
+                self.assertRegex(response.headers.get("Retry-After", ""), r"^[1-9][0-9]*$")
+                self.assertEqual(json.load(response), {"status": "pending"})
+            with self.assertRaises(arc_draw.ArcPending):
+                fetch_preview(url, TOKEN, self.buyer_draw)
+            self.responses[tip] = finalized
+            self.assertEqual(fetch_preview(url, TOKEN, self.buyer_draw),
+                             self.deliver(REQUEST))
+
+    def test_conflicting_draw_or_malformed_receipt_never_returns_pending(self):
+        tip = ("eth_getBlockByNumber", ("finalized", False))
+        for key, replacement in [(tip, dict(self.responses[tip], hash="0x" + "ff" * 32)),
+                                 (("eth_getTransactionReceipt", (REQUEST,)), [])]:
+            with self.subTest(key=key):
+                with patch.dict(self.responses, {key: replacement}), seller_endpoint(self.deliver) as url:
+                    with self.assertRaises(HTTPError) as error:
+                        fetch_preview(url, TOKEN, self.buyer_draw)
+                    with error.exception as response:
+                        self.assertEqual(response.code, 409)
+                        self.assertNotIn(b"trip-", response.read())
+
     def test_seller_denies_wrong_token_and_failed_payment(self):
         with seller_endpoint(self.deliver) as url:
             for token, status in [("wrong", 401), (TOKEN, 409)]:
@@ -140,10 +170,14 @@ class ProtocolSmokeTest(unittest.TestCase):
                     self.assertNotIn(b"trip-", response.read())
 
     def test_pending_transaction_lookup_can_be_retried_with_same_hash(self):
+        receipt_key = ("eth_getTransactionReceipt", (REQUEST,))
+        with patch.dict(self.responses, {receipt_key: None}):
+            with self.assertRaises(arc_draw.ArcPending):
+                self.draw(REQUEST)
         transaction = self.responses["eth_getTransactionByHash", (REQUEST,)]
         height = transaction["blockNumber"]
         transaction["blockNumber"] = None
-        with self.assertRaisesRegex(ValueError, "retry with the same hash"):
+        with self.assertRaisesRegex(arc_draw.ArcPending, "retry with the same hash"):
             self.draw(REQUEST)
         transaction["blockNumber"] = height
         self.assertEqual(self.draw(REQUEST), self.buyer_draw)

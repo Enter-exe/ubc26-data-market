@@ -6,7 +6,7 @@ from urllib.error import HTTPError
 from urllib.parse import urlsplit
 from urllib.request import HTTPRedirectHandler, Request, build_opener
 
-from arc_draw import RPC_URL, rpc_client, verify_draw
+from arc_draw import ArcPending, RPC_URL, rpc_client, verify_draw
 from arc_purchase import verify_purchase
 from sample_delivery import check, check_full_rows
 
@@ -25,10 +25,16 @@ def fetch_delivery(seller_url, token, path):
     req = Request(seller_url.rstrip("/") + path,
                   headers={"Authorization": "Bearer " + token, "Accept": "application/json"})
     with build_opener(KeepBuyerTokenAtSeller()).open(req, timeout=45) as response:
+        status = response.status
         data = response.read(65537)
     if len(data) > 65536:
         raise ValueError("Seller response exceeds 64 KiB")
-    return json.loads(data)
+    delivery = json.loads(data)
+    if status == 202 and isinstance(delivery, dict) and delivery.get("status") == "pending":
+        raise ArcPending("Seller is waiting for Arc confirmation")
+    if status != 200:
+        raise ValueError(f"Unexpected seller delivery response (HTTP {status})")
+    return delivery
 
 
 def fetch_preview(seller_url, token, draw):
@@ -68,6 +74,8 @@ def main():
         else:
             draw = verify_draw(rpc, args.seller, args.buyer, args.listing_tx, args.request_tx)
             receipt = {"draw": draw, "delivery": fetch_preview(args.seller_api, token, draw)}
+    except ArcPending as exc:
+        parser.exit(75, f"{exc}. Repeat this read with the same transaction hash.\n")
     except HTTPError as exc:
         parser.exit(1, f"Request failed with HTTP status {exc.code}\n")
     except (OSError, ValueError, IndexError, TypeError, KeyError) as exc:

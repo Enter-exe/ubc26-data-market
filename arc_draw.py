@@ -18,6 +18,10 @@ REQUEST_TAG = b"UBC26:sample:v1:"
 DRAW_TAG = b"UBC26:draw:v1:"
 
 
+class ArcPending(ValueError):
+    """The same transaction hash can be checked again as the chain advances."""
+
+
 def hex_data(value, size, label):
     if not isinstance(value, str) or not re.fullmatch(r"0x[0-9a-fA-F]{%d}" % (2 * size), value):
         raise ValueError(f"Expected {size} bytes of 0x-prefixed hex for {label}")
@@ -62,32 +66,44 @@ def block_at(rpc, tag):
 def checked_transaction(rpc, tx_hash, sender, recipient, value):
     tx = rpc("eth_getTransactionByHash", [tx_hash])
     receipt = rpc("eth_getTransactionReceipt", [tx_hash])
-    if not isinstance(tx, dict) or not isinstance(receipt, dict):
+    if ((tx is not None and not isinstance(tx, dict)) or
+            (receipt is not None and not isinstance(receipt, dict))):
         raise ValueError(f"Transaction or receipt unavailable for {tx_hash}")
-    if (hex_data(tx.get("hash"), 32, "transaction hash") != tx_hash or
-            hex_data(receipt.get("transactionHash"), 32, "receipt transaction hash") != tx_hash or
+    if tx is not None:
+        if hex_data(tx.get("hash"), 32, "transaction hash") != tx_hash:
+            raise ValueError(f"Expected a matching successful receipt for {tx_hash}")
+        if (hex_data(tx.get("from"), 20, "sender") != sender or
+                hex_data(tx.get("to"), 20, "recipient") != recipient or
+                quantity(tx.get("value"), "value") != value or
+                quantity(tx.get("type"), "transaction type") not in (0, 1, 2)):
+            raise ValueError(f"Incorrect sender, recipient, value or transaction type for {tx_hash}")
+        if not all(field in tx for field in ("blockNumber", "blockHash", "transactionIndex")):
+            raise ValueError(f"Transaction {tx_hash} lacks block position fields")
+        tx_height = None if tx["blockNumber"] is None else quantity(tx["blockNumber"], "transaction block number")
+        tx_index = None if tx["transactionIndex"] is None else quantity(tx["transactionIndex"], "transaction index")
+        tx_block = None if tx["blockHash"] is None else hex_data(tx["blockHash"], 32, "transaction block hash")
+
+    if receipt is None:
+        raise ArcPending(f"Transaction or receipt unavailable for {tx_hash}")
+    if (hex_data(receipt.get("transactionHash"), 32, "receipt transaction hash") != tx_hash or
             quantity(receipt.get("status"), "receipt status") != 1):
         raise ValueError(f"Expected a matching successful receipt for {tx_hash}")
-    if (hex_data(tx.get("from"), 20, "sender") != sender or
-            hex_data(tx.get("to"), 20, "recipient") != recipient or
-            quantity(tx.get("value"), "value") != value or
-            quantity(tx.get("type"), "transaction type") not in (0, 1, 2)):
-        raise ValueError(f"Incorrect sender, recipient, value or transaction type for {tx_hash}")
-
-    if any(tx.get(field) is None for field in ("blockNumber", "blockHash", "transactionIndex")):
-        raise ValueError(f"Transaction {tx_hash} is not yet indexed as mined; retry with the same hash")
-
     height = quantity(receipt.get("blockNumber"), "receipt block number")
-    index = quantity(receipt.get("transactionIndex"), "transaction index")
+    index = quantity(receipt.get("transactionIndex"), "receipt transaction index")
     tag = hex(height)
     _, canonical_hash, hashes = block_at(rpc, tag)
-    if (quantity(tx.get("blockNumber"), "transaction block number") != height or
-            quantity(tx.get("transactionIndex"), "transaction index") != index or
-            hex_data(tx.get("blockHash"), 32, "transaction block hash") != canonical_hash or
-            hex_data(receipt.get("blockHash"), 32, "receipt block hash") != canonical_hash or
+    if (hex_data(receipt.get("blockHash"), 32, "receipt block hash") != canonical_hash or
             not isinstance(hashes, list) or index >= len(hashes) or
             hex_data(hashes[index], 32, "included transaction hash") != tx_hash):
         raise ValueError(f"Transaction {tx_hash} does not match its canonical block")
+    if tx is None:
+        raise ArcPending(f"Transaction or receipt unavailable for {tx_hash}")
+    if ((tx_height is not None and tx_height != height) or
+            (tx_index is not None and tx_index != index) or
+            (tx_block is not None and tx_block != canonical_hash)):
+        raise ValueError(f"Transaction {tx_hash} does not match its canonical block")
+    if None in (tx_height, tx_index, tx_block):
+        raise ArcPending(f"Transaction {tx_hash} is not yet indexed as mined; retry with the same hash")
     for address in {sender, recipient}:
         if rpc("eth_getCode", [address, tag]) != "0x":
             raise ValueError(f"Expected an account with empty code at block {height}: {address}")
@@ -123,7 +139,9 @@ def verify_listing_details(rpc, seller, listing_tx):
     else:
         raise ValueError("Listing calldata has the wrong protocol tag")
     final_height, final_hash, _ = block_at(rpc, "finalized")
-    if listing_pos[0] > final_height or (listing_pos[0] == final_height and listing_hash != final_hash):
+    if listing_pos[0] > final_height:
+        raise ArcPending("Listing anchor is not finalized on the canonical chain")
+    if listing_pos[0] == final_height and listing_hash != final_hash:
         raise ValueError("Listing anchor is not finalized on the canonical chain")
     return listing_pos, listing_hash, anchor[-64:], dataset
 
@@ -152,7 +170,7 @@ def verify_draw(rpc, seller, buyer, listing_tx, request_tx):
     draw_block = request_pos[0] + 2
     final_height, final_hash, _ = block_at(rpc, "finalized")
     if draw_block > final_height:
-        raise ValueError(f"Await finalized draw block {draw_block} (currently {final_height})")
+        raise ArcPending(f"Await finalized draw block {draw_block} (currently {final_height})")
     _, draw_hash, _ = block_at(rpc, hex(draw_block))
     if draw_block == final_height and draw_hash != final_hash:
         raise ValueError("Draw block does not match the finalized tip")
@@ -181,6 +199,8 @@ def main():
     args = parser.parse_args()
     try:
         draw = verify_draw(rpc_client(args.rpc_url), args.seller, args.buyer, args.listing_tx, args.request_tx)
+    except ArcPending as exc:
+        parser.exit(75, f"Draw pending: {exc}. Check again with the same transaction hashes.\n")
     except (ValueError, URLError, OSError) as exc:
         parser.exit(1, f"Draw verification failed: {exc}\n")
     print(json.dumps(draw, indent=2))

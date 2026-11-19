@@ -7,7 +7,7 @@ import re
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
-from arc_draw import RPC_URL, hex_data, rpc_client, verify_draw, verify_listing_details
+from arc_draw import ArcPending, RPC_URL, hex_data, rpc_client, verify_draw, verify_listing_details
 from arc_purchase import verify_offer, verify_purchase
 from sample_delivery import check_full_rows, package, snapshot_tree
 
@@ -28,6 +28,8 @@ def seller_handler(token, deliver, deliver_purchase=None):
             self.send_header("Content-Length", str(len(body)))
             if status == 401:
                 self.send_header("WWW-Authenticate", "Bearer")
+            if status == 202:
+                self.send_header("Retry-After", "2")
             self.end_headers()
             self.wfile.write(body)
 
@@ -43,6 +45,9 @@ def seller_handler(token, deliver, deliver_purchase=None):
                 return
             try:
                 delivery = routes[match[1]](match[2])
+            except ArcPending:
+                self.reply(202, {"status": "pending"})
+                return
             except OSError:
                 self.reply(503, {"error": "Arc RPC unavailable"})
                 return

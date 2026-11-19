@@ -1,5 +1,5 @@
 """Verify a seller's fixed-price Arc testnet offer and its full dataset payment."""
-from arc_draw import CHAIN_ID, block_at, checked_transaction, hex_data, quantity, verify_listing_details
+from arc_draw import ArcPending, CHAIN_ID, block_at, checked_transaction, hex_data, quantity, verify_listing_details
 
 
 FULL_PRICE_BASE_UNITS = 10**17  # 0.1 native test USDC
@@ -13,7 +13,9 @@ def _check_reference(rpc, transaction, previous_pos, previous_tx, tag):
     if payload != "0x" + tag.hex() + previous_tx[2:] or position <= previous_pos:
         raise ValueError("Transaction must reference and follow the expected prior transaction")
     height, final_hash, _ = block_at(rpc, "finalized")
-    if position[0] > height or (position[0] == height and block_hash != final_hash):
+    if position[0] > height:
+        raise ArcPending("Transaction is not finalized on the canonical chain")
+    if position[0] == height and block_hash != final_hash:
         raise ValueError("Transaction is not finalized on the canonical chain")
 
 
