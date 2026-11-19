@@ -14,13 +14,19 @@ def positions(draw):
     return indices
 
 
-def package(snapshot, draw):
+def snapshot_tree(snapshot, root):
     rows = snapshot["rows"]
-    if len(rows) != 64:
+    if not isinstance(rows, list) or len(rows) != 64:
         raise ValueError("Snapshot must contain 64 rows")
     levels = tree(rows)
-    if levels[-1][0].hex() != draw["root"] or snapshot["manifest"]["root"] != draw["root"]:
+    if levels[-1][0].hex() != root or snapshot["manifest"]["root"] != root:
         raise ValueError("Snapshot differs from the anchored listing")
+    return levels
+
+
+def package(snapshot, draw):
+    levels = snapshot_tree(snapshot, draw["root"])
+    rows = snapshot["rows"]
     samples = []
     for i in positions(draw):
         path = [layer[(i >> depth) ^ 1].hex() for depth, layer in enumerate(levels[:-1])]

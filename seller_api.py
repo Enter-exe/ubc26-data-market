@@ -7,8 +7,8 @@ import re
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
-from arc_draw import RPC_URL, hex_data, rpc_client, verify_draw
-from sample_delivery import package
+from arc_draw import RPC_URL, hex_data, rpc_client, verify_draw, verify_listing
+from sample_delivery import package, snapshot_tree
 
 
 def seller_handler(token, deliver):
@@ -71,6 +71,8 @@ def main():
         listing = hex_data(args.listing_tx, 32, "listing transaction")
         rpc = rpc_client(args.rpc_url)
         snapshot = json.loads(args.snapshot.read_text(encoding="utf-8"))
+        _, _, root = verify_listing(rpc, seller, listing)
+        snapshot_tree(snapshot, root)
 
         def deliver(request_tx):
             draw = verify_draw(rpc, seller, buyer, listing, request_tx)
@@ -80,7 +82,7 @@ def main():
         with ThreadingHTTPServer(("127.0.0.1", args.port), handler) as server:
             print(f"Seller API listening on http://127.0.0.1:{server.server_port}", flush=True)
             server.serve_forever()
-    except (OSError, ValueError, OverflowError) as exc:
+    except (OSError, ValueError, OverflowError, KeyError, TypeError) as exc:
         parser.exit(1, f"Seller API failed: {exc}\n")
     except KeyboardInterrupt:
         pass

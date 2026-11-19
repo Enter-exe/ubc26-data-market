@@ -1,15 +1,18 @@
 """Offline protocol smoke tests with synthetic taxi rows and fictional Arc receipts."""
+import json
 import unittest
-from contextlib import contextmanager
+from contextlib import contextmanager, redirect_stderr, redirect_stdout
 from http.server import HTTPServer
+from io import StringIO
 from threading import Thread
 from urllib.error import HTTPError
+from unittest.mock import patch
 
 from arc_draw import verify_draw, verify_listing
 from buyer_sample import fetch_preview
 from chicago_snapshot import build_snapshot
 from sample_delivery import package
-from seller_api import seller_handler
+from seller_api import main as seller_main, seller_handler
 
 
 SELLER, BUYER = "0x" + "aa" * 20, "0x" + "bb" * 20
@@ -132,6 +135,47 @@ class ProtocolSmokeTest(unittest.TestCase):
                 with error.exception as response:
                     self.assertEqual(response.code, status)
                     self.assertNotIn(b"trip-", response.read())
+
+    def test_pending_transaction_lookup_can_be_retried_with_same_hash(self):
+        transaction = self.responses["eth_getTransactionByHash", (REQUEST,)]
+        height = transaction["blockNumber"]
+        transaction["blockNumber"] = None
+        with self.assertRaisesRegex(ValueError, "retry with the same hash"):
+            self.draw(REQUEST)
+        transaction["blockNumber"] = height
+        self.assertEqual(self.draw(REQUEST), self.buyer_draw)
+
+    def test_seller_denies_payment_from_another_buyer(self):
+        self.responses["eth_getTransactionByHash", (REQUEST,)]["from"] = "0x" + "cc" * 20
+        with seller_endpoint(self.deliver) as url, self.assertRaises(HTTPError) as error:
+            fetch_preview(url, TOKEN, self.buyer_draw)
+        with error.exception as response:
+            self.assertEqual(response.code, 409)
+            self.assertNotIn(b"trip-", response.read())
+
+    def test_seller_checks_snapshot_before_listening(self):
+        def rpc(method, params):
+            return self.responses[method, tuple(params)]
+
+        args = ["seller_api.py", "--snapshot", "fixture.json", "--seller", SELLER,
+                "--buyer", BUYER, "--listing-tx", LISTING]
+        valid_snapshot = json.dumps(self.snapshot)
+        self.snapshot["rows"][0][2] += 1
+        for contents, can_listen in [(valid_snapshot, True), (json.dumps(self.snapshot), False)]:
+            with self.subTest(can_listen=can_listen), patch("sys.argv", args), \
+                    patch.dict("os.environ", {"UBC26_BUYER_TOKEN": TOKEN}), \
+                    patch("seller_api.Path.read_text", return_value=contents), \
+                    patch("seller_api.rpc_client", return_value=rpc), \
+                    patch("seller_api.ThreadingHTTPServer") as server:
+                if can_listen:
+                    with redirect_stdout(StringIO()):
+                        seller_main()
+                    server.assert_called_once()
+                else:
+                    with redirect_stderr(StringIO()) as stderr, self.assertRaises(SystemExit):
+                        seller_main()
+                    self.assertIn("Snapshot differs from the anchored listing", stderr.getvalue())
+                    server.assert_not_called()
 
     def test_buyer_rejects_changed_fare(self):
         def altered(request):

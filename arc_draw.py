@@ -72,6 +72,9 @@ def checked_transaction(rpc, tx_hash, sender, recipient, value):
             quantity(tx.get("type"), "transaction type") not in (0, 1, 2)):
         raise ValueError(f"Incorrect sender, recipient, value or transaction type for {tx_hash}")
 
+    if any(tx.get(field) is None for field in ("blockNumber", "blockHash", "transactionIndex")):
+        raise ValueError(f"Transaction {tx_hash} is not yet indexed as mined; retry with the same hash")
+
     height = quantity(receipt.get("blockNumber"), "receipt block number")
     index = quantity(receipt.get("transactionIndex"), "transaction index")
     tag = hex(height)
