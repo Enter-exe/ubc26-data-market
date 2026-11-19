@@ -40,7 +40,7 @@ def fetch_preview(seller_url, token, draw):
 def fetch_purchase(seller_url, token, purchase):
     delivery = fetch_delivery(seller_url, token, "/purchase/" + purchase["purchase_tx"])
     rows = delivery["rows"]
-    check_full_rows(rows, purchase["root"])
+    check_full_rows(rows, purchase["root"], purchase.get("dataset"))
     return {"rows": rows}
 
 

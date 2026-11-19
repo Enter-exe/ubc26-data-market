@@ -7,7 +7,7 @@ import re
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
-from arc_draw import RPC_URL, hex_data, rpc_client, verify_draw, verify_listing
+from arc_draw import RPC_URL, hex_data, rpc_client, verify_draw, verify_listing_details
 from arc_purchase import verify_offer, verify_purchase
 from sample_delivery import check_full_rows, package, snapshot_tree
 
@@ -77,12 +77,15 @@ def main():
         rpc = rpc_client(args.rpc_url)
         snapshot = json.loads(args.snapshot.read_text(encoding="utf-8"))
         if offer:
-            root = verify_offer(rpc, seller, listing, offer)["root"]
-            check_full_rows(snapshot["rows"], root)
-            if snapshot["manifest"]["root"] != root:
-                raise ValueError("Snapshot manifest differs from the full offer")
+            terms = verify_offer(rpc, seller, listing, offer)
+            root, dataset = terms["root"], terms.get("dataset")
         else:
-            _, _, root = verify_listing(rpc, seller, listing)
+            _, _, root, dataset = verify_listing_details(rpc, seller, listing)
+        if offer or dataset:
+            check_full_rows(snapshot["rows"], root, dataset)
+            if snapshot["manifest"]["root"] != root:
+                raise ValueError("Snapshot manifest differs from the anchored listing")
+        else:
             snapshot_tree(snapshot, root)
 
         def deliver(request_tx):
@@ -92,7 +95,7 @@ def main():
         def deliver_purchase(purchase_tx):
             purchase = verify_purchase(rpc, seller, buyer, listing, offer, purchase_tx)
             rows = snapshot["rows"]
-            check_full_rows(rows, purchase["root"])
+            check_full_rows(rows, purchase["root"], purchase.get("dataset"))
             return {"rows": rows}
 
         handler = seller_handler(token.encode("ascii"), deliver, deliver_purchase if offer else None)

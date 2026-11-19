@@ -1,21 +1,42 @@
 """Produce or check an eight-row sample against an independently verified Arc draw."""
 import argparse
 import json
+import re
 from pathlib import Path
 
+from arc_draw import BTC_DATASET
 from chicago_snapshot import ROW_COUNT
 from market import tree, verify
 
 
-def check_full_rows(rows, expected_root):
+def btc_row_hour(row):
+    """Validate a BTC hourly range pair and return its target hour in Unix seconds."""
+    if (not isinstance(row, list) or len(row) != 3 or not isinstance(row[0], str)
+            or any(type(n) is not int or n <= 0 for n in row[1:])):
+        raise ValueError("Invalid BTC hourly range row")
+    match = re.fullmatch(r"BTC-USD:1h:([0-9]{10})", row[0])
+    if not match or int(match[1]) % 3600:
+        raise ValueError("Expected a BTC-USD candle on a UTC hour boundary")
+    return int(match[1])
+
+
+def check_full_rows(rows, expected_root, dataset=None):
     if not isinstance(rows, list) or len(rows) != ROW_COUNT:
-        raise ValueError(f"Expected {ROW_COUNT} purchased Chicago taxi rows")
-    last_id = ""
-    for row in rows:
-        if (not isinstance(row, list) or len(row) != 3 or not isinstance(row[0], str) or
-                row[0] <= last_id or any(type(n) is not int or n <= 0 for n in row[1:])):
-            raise ValueError("Expected ordered unique trip IDs with positive integer miles and fares in hundredths")
-        last_id = row[0]
+        raise ValueError(f"Expected {ROW_COUNT} purchased rows")
+    if dataset == BTC_DATASET:
+        start = btc_row_hour(rows[0])
+        for i, row in enumerate(rows):
+            if btc_row_hour(row) != start + i * 3600 or (i and row[1] != rows[i - 1][2]):
+                raise ValueError("Expected consecutive BTC hours with aligned previous-hour ranges")
+    elif dataset is None:
+        last_id = ""
+        for row in rows:
+            if (not isinstance(row, list) or len(row) != 3 or not isinstance(row[0], str) or
+                    row[0] <= last_id or any(type(n) is not int or n <= 0 for n in row[1:])):
+                raise ValueError("Expected ordered unique trip IDs with positive integer miles and fares in hundredths")
+            last_id = row[0]
+    else:
+        raise ValueError("Unknown listing dataset")
     if tree(rows)[-1][0].hex() != expected_root:
         raise ValueError("Purchased rows differ from the anchored listing")
 
@@ -55,11 +76,17 @@ def check(delivery, draw):
     if [s["index"] for s in samples] != positions(draw):
         raise ValueError("Received indices differ from the chain-selected draw")
     root = bytes.fromhex(draw["root"])
+    start_hour = None
     for s in samples:
         path = [bytes.fromhex(h) for h in s["proof"]]
         if (type(s["index"]) is not int or len(path) != 6 or any(len(h) != 32 for h in path)
                 or not verify(s["index"], s["row"], path, root)):
             raise ValueError(f"Invalid proof at index {s['index']}")
+        if draw.get("dataset") == BTC_DATASET:
+            start = btc_row_hour(s["row"]) - 3600 * s["index"]
+            if start_hour is not None and start != start_hour:
+                raise ValueError("Sampled BTC hours disagree with the chain-selected positions")
+            start_hour = start
 
 
 def main():

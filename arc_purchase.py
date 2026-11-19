@@ -1,5 +1,5 @@
 """Verify a seller's fixed-price Arc testnet offer and its full dataset payment."""
-from arc_draw import CHAIN_ID, block_at, checked_transaction, hex_data, quantity, verify_listing
+from arc_draw import CHAIN_ID, block_at, checked_transaction, hex_data, quantity, verify_listing_details
 
 
 FULL_PRICE_BASE_UNITS = 10**17  # 0.1 native test USDC
@@ -22,13 +22,16 @@ def verify_offer(rpc, seller, listing_tx, offer_tx):
     seller = hex_data(seller, 20, "seller")
     listing_tx = hex_data(listing_tx, 32, "listing transaction")
     offer_tx = hex_data(offer_tx, 32, "offer transaction")
-    listing_pos, _, root = verify_listing(rpc, seller, listing_tx)
+    listing_pos, _, root, dataset = verify_listing_details(rpc, seller, listing_tx)
     offer = checked_transaction(rpc, offer_tx, seller, seller, 0)
     _check_reference(rpc, offer, listing_pos, listing_tx, OFFER_TAG)
     (height, index), block_hash, _, _ = offer
-    return dict(version=1, chain_id=CHAIN_ID, seller=seller, root=root, listing_tx=listing_tx,
+    terms = dict(version=1, chain_id=CHAIN_ID, seller=seller, root=root, listing_tx=listing_tx,
                 offer_tx=offer_tx, offer_block=height, offer_index=index, offer_block_hash=block_hash,
                 price_base_units=str(FULL_PRICE_BASE_UNITS))
+    if dataset:
+        terms["dataset"] = dataset
+    return terms
 
 
 def verify_purchase(rpc, seller, buyer, listing_tx, offer_tx, purchase_tx):

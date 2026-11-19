@@ -12,6 +12,8 @@ CHAIN_ID = 5042002
 RPC_URL = "https://rpc.testnet.arc.io"
 FEE_BASE_UNITS = 10**16  # 0.01 native test USDC (18 decimals)
 LISTING_TAG = b"UBC26:listing:v1:"
+BTC_DATASET = "btc-usd-hourly"
+BTC_LISTING_TAG = b"UBC26:btc-usd-hourly:v1:"
 REQUEST_TAG = b"UBC26:sample:v1:"
 DRAW_TAG = b"UBC26:draw:v1:"
 
@@ -106,7 +108,7 @@ def draw_indices(root_bytes, request_hash_bytes, block_hash_bytes):
     return indices
 
 
-def verify_listing(rpc, seller, listing_tx):
+def verify_listing_details(rpc, seller, listing_tx):
     """Read a finalized seller commitment before preparing a sample payment."""
     seller = hex_data(seller, 20, "seller")
     listing_tx = hex_data(listing_tx, 32, "listing transaction")
@@ -114,13 +116,21 @@ def verify_listing(rpc, seller, listing_tx):
         raise ValueError(f"Expected Arc Testnet chain {CHAIN_ID}")
 
     listing_pos, listing_hash, anchor, _ = checked_transaction(rpc, listing_tx, seller, seller, 0)
-    anchor = hex_data(anchor, len(LISTING_TAG) + 32, "listing calldata")
-    if not anchor.startswith("0x" + LISTING_TAG.hex()):
+    for tag, dataset in ((LISTING_TAG, None), (BTC_LISTING_TAG, BTC_DATASET)):
+        if isinstance(anchor, str) and anchor.lower().startswith("0x" + tag.hex()):
+            anchor = hex_data(anchor, len(tag) + 32, "listing calldata")
+            break
+    else:
         raise ValueError("Listing calldata has the wrong protocol tag")
     final_height, final_hash, _ = block_at(rpc, "finalized")
     if listing_pos[0] > final_height or (listing_pos[0] == final_height and listing_hash != final_hash):
         raise ValueError("Listing anchor is not finalized on the canonical chain")
-    return listing_pos, listing_hash, anchor[-64:]
+    return listing_pos, listing_hash, anchor[-64:], dataset
+
+
+def verify_listing(rpc, seller, listing_tx):
+    """Return the finalized commitment using the original three-field interface."""
+    return verify_listing_details(rpc, seller, listing_tx)[:3]
 
 
 def verify_draw(rpc, seller, buyer, listing_tx, request_tx):
@@ -131,7 +141,7 @@ def verify_draw(rpc, seller, buyer, listing_tx, request_tx):
     request_tx = hex_data(request_tx, 32, "request transaction")
     if seller == buyer:
         raise ValueError("Seller and buyer must have distinct addresses")
-    listing_pos, listing_hash, root = verify_listing(rpc, seller, listing_tx)
+    listing_pos, listing_hash, root, dataset = verify_listing_details(rpc, seller, listing_tx)
     request_pos, request_hash, payment, receipt = checked_transaction(rpc, request_tx, buyer, seller, FEE_BASE_UNITS)
     payment = hex_data(payment, len(REQUEST_TAG) + 32, "request calldata")
     if payment != "0x" + REQUEST_TAG.hex() + listing_tx[2:]:
@@ -150,12 +160,15 @@ def verify_draw(rpc, seller, buyer, listing_tx, request_tx):
     gas_used = quantity(receipt.get("gasUsed"), "request gas used")
     gas_price = quantity(receipt.get("effectiveGasPrice"), "request effective gas price")
     network_fee = gas_used * gas_price
-    return dict(version=1, chain_id=CHAIN_ID, root=root, indices=indices, seller=seller, buyer=buyer,
+    draw = dict(version=1, chain_id=CHAIN_ID, root=root, indices=indices, seller=seller, buyer=buyer,
                 listing_tx=listing_tx, request_tx=request_tx, fee_base_units=str(FEE_BASE_UNITS),
                 request_gas_fee_base_units=str(network_fee), buyer_total_base_units=str(FEE_BASE_UNITS + network_fee),
                 listing_block=listing_pos[0], listing_block_hash=listing_hash,
                 request_block=request_pos[0], request_block_hash=request_hash,
                 draw_block=draw_block, draw_block_hash=draw_hash)
+    if dataset:
+        draw["dataset"] = dataset
+    return draw
 
 
 def main():

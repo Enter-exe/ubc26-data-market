@@ -1,8 +1,48 @@
 # UBC26 · Try-before-you-buy data market for agents
 
-A buyer can inspect a few records but needs to decide whether the remaining records are worth their price. The offline decision demo makes that tradeoff visible. Two synthetic sellers offer freight quotes. The buyer pays a small sample fee to each, checks where the rows came from, measures their usefulness on its own pricing task, then buys the qualifying offer with the largest estimated surplus.
+A seller commits to 64 hourly BTC–USD training examples. An agent pays for eight examples selected through Arc, checks their Merkle proofs and estimates the training value of the other 56. If that value covers the full price and gas within its remaining budget, it prepares a wallet payment. After delivery the buyer can measure what its money bought.
 
-## Run the first demo
+## Run the BTC training-data demo
+
+The seller source is historical Coinbase Exchange BTC–USD candles. Each example pairs the preceding hour’s high–low range with the current hour’s range. Ranges are relative to the opening price, rounded to basis points and stored plus one. Adjacent examples share an hourly range. These public candles stand in for a seller feed; anyone can recreate this particular listing from Coinbase. [Coinbase candle API](https://docs.cdp.coinbase.com/api-reference/exchange-api/rest-api/products/get-product-candles)
+
+```sh
+python3 btc_snapshot.py --output /tmp/btc-listing.json --benchmark-output /tmp/btc-buyer.json
+python3 btc_buyer.py rehearse --snapshot /tmp/btc-listing.json --benchmark /tmp/btc-buyer.json \
+  --seed 26 --remaining-budget 0.20 --reward-per-bp 0.10
+```
+
+The first command fetches historical data. The second runs offline with a deterministic simulated draw and simulated payments. The seller’s 64 examples and the buyer’s 192 earlier calibration hours and 64 later holdout hours occupy disjoint candle windows. The two files can also be fetched independently.
+
+The buyer predicts hourly range from the three training hours with the most similar preceding ranges. On historical windows it compares keeping eight examples against training on all 64, always including the buyer’s earlier training history. It averages the error reduction from the eight historical previews most similar to the current sample. The buyer sets the value in test USDC of lowering mean absolute forecast error by one basis point. The preview fee is already spent when the buyer compares that estimate with the full price plus gas. Overlapping historical windows give limited evidence, and market conditions can change.
+
+On the January 2024 snapshot, seed 26 projected **0.883 basis points** of improvement. With the reward above, the buyer valued the remaining rows at **0.0883 test USDC** and passed on a **0.101** total cost. Set `--reward-per-bp 0.20` with the same draw and budget and it buys at an estimated value of **0.1766**. After delivery, error on the untouched holdout rose from **39.125 to 41.75 basis points**. This run overestimated the additional training value.
+
+## Use the BTC buyer on Arc testnet
+
+1. Prepare a listing with `python3 arc_intent.py listing --dataset btc-usd-hourly --seller "$SELLER" --root "$ROOT"`. Sign it with the seller test wallet. The protocol places a BTC-specific tag and the root onchain. Publish the full offer using the `offer` command below and start the private seller service with the BTC snapshot and confirmed offer hash.
+2. Prepare the sample with `python3 arc_intent.py request --dataset btc-usd-hourly --seller "$SELLER" --buyer "$BUYER" --listing-tx "$LISTING_TX" --expected-root "$ROOT"`. This checks the finalized schema and commitment before the wallet signs the 0.01 test-USDC payment. Save its hash as `REQUEST_TX`.
+3. Once the draw finalizes, run the buyer with the seller token in `UBC26_BUYER_TOKEN`. The same variables identify the listing, preview and offer throughout the purchase.
+
+```sh
+python3 btc_buyer.py decide --seller "$SELLER" --buyer "$BUYER" --listing-tx "$LISTING_TX" \
+  --request-tx "$REQUEST_TX" --offer-tx "$OFFER_TX" --benchmark /tmp/btc-buyer.json \
+  --remaining-budget 0.20 --reward-per-bp 0.10
+```
+
+The buyer reads Arc, verifies the paid preview, checks the finalized offer and consults the wallet balance and gas quote. A buy decision includes an unsigned wallet request with the quoted gas limit and price. After signing it once and waiting for finality, run the following to verify payment and full delivery and score forecast error on the reserved hours.
+
+```sh
+python3 btc_buyer.py assess --seller "$SELLER" --buyer "$BUYER" --listing-tx "$LISTING_TX" \
+  --request-tx "$REQUEST_TX" --offer-tx "$OFFER_TX" --purchase-tx "$PURCHASE_TX" \
+  --benchmark /tmp/btc-buyer.json
+```
+
+The published Arc receipts below are for the Chicago preview. The BTC demo has been exercised with real market data and simulated payments. A BTC-specific paid testnet run remains pending.
+
+## Run the synthetic freight demo
+
+Two synthetic sellers offer freight quotes. The buyer pays for samples, measures usefulness on its own pricing task and buys the qualifying offer with the largest estimated surplus.
 
 Run `python3 market.py` with Python 3.8 or later. It uses the standard library and runs offline. The terminal shows each seller’s commitment, the buyer’s sampled indices, proof results, prediction errors, prices, decision, and remaining balance.
 
@@ -31,7 +71,7 @@ The larger protocol adds seller collateral, stronger resistance to block-propose
 
 ## Proposed hackathon entry
 
-Enter Agentic Payments & AI and opt in to Best use of Arc. The buyer has paid for a verified Chicago taxi preview on Arc testnet. The remaining payment milestone is to settle the full purchase when estimated utility covers its price and gas within the buyer's budget. The freight desk currently demonstrates that buying decision with simulated credits.
+Enter Agentic Payments & AI and opt in to Best use of Arc. The buyer has paid for a verified Chicago taxi preview on Arc testnet. The remaining payment milestone is to settle the full purchase when estimated utility covers its price and gas within the buyer's budget. The BTC buyer rehearses the valuation and verified delivery on historical Coinbase data.
 
 The track and Arc awards can stack ($2,000 and $1,000), alongside an overall award and qualifying bounties. Solana is an alternative chain award ($1,500). Teams select one chain award. Submit a public repo, working demo, technical README and 2–3 minute video by November 20 at noon Central. Finalists must attend the November 21 closing ceremony in person for prizes. [Official guide](https://docs.google.com/document/d/1QaySCo7u3VxMVNdk3C5Ab3ewc2E46AuLntti-Uzx5EY/edit) · [Devpost](https://ubc-hackathon-2026.devpost.com/)
 
@@ -95,4 +135,4 @@ A seller can offer all 64 committed rows for a fixed **0.10 test USDC**. This is
      --listing-tx "$LISTING_TX" --offer-tx "$OFFER_TX" --purchase-tx "$PURCHASE_TX"
    ```
 
-Run `python3 -B -m unittest discover -v` for the offline purchase rehearsal with fictional receipts. The public Arc transaction links above cover the paid preview. A live full-purchase receipt and a valuation on the Chicago data remain pending.
+Run `python3 -B -m unittest discover -v` for the offline purchase rehearsal with fictional receipts. The public Arc transaction links above cover the paid preview. A live BTC preview and full-purchase receipt remain pending.

@@ -8,12 +8,28 @@ Select the expected chain in the wallet before signing. The wallet estimates gas
 import argparse
 import json
 
-from arc_draw import CHAIN_ID, FEE_BASE_UNITS, LISTING_TAG, REQUEST_TAG, RPC_URL, hex_data, rpc_client, verify_listing
+from arc_draw import (BTC_DATASET, BTC_LISTING_TAG, CHAIN_ID, FEE_BASE_UNITS, LISTING_TAG,
+                      REQUEST_TAG, RPC_URL, hex_data, rpc_client, verify_listing_details)
 from arc_purchase import FULL_PRICE_BASE_UNITS, OFFER_TAG, PURCHASE_TAG, verify_offer
 
 
 def root_hex(value):
     return hex_data(value if value.startswith("0x") else "0x" + value, 32, "listing root")[2:]
+
+
+def wallet_request(sender, recipient, value, payload):
+    tx = {"from": sender, "to": recipient, "value": hex(value), "data": "0x" + payload}
+    return dict(chain_id=CHAIN_ID, chain_id_hex=hex(CHAIN_ID), method="eth_sendTransaction", params=[tx])
+
+
+def purchase_wallet_request(seller, buyer, offer_tx):
+    """Encode the full payment after verifying the seller offer."""
+    seller = hex_data(seller, 20, "seller")
+    buyer = hex_data(buyer, 20, "buyer")
+    offer_tx = hex_data(offer_tx, 32, "offer transaction")
+    if seller == buyer:
+        raise ValueError("Seller and buyer must have distinct addresses")
+    return wallet_request(buyer, seller, FULL_PRICE_BASE_UNITS, PURCHASE_TAG.hex() + offer_tx[2:])
 
 
 def main():
@@ -22,11 +38,14 @@ def main():
     listing = commands.add_parser("listing", help="Prepare a zero-value seller self-anchor")
     listing.add_argument("--seller", required=True)
     listing.add_argument("--root", required=True, help="32-byte Merkle root, optionally prefixed with 0x")
+    listing.add_argument("--dataset", choices=("chicago-taxi", BTC_DATASET), default="chicago-taxi")
     request = commands.add_parser("request", help="Prepare the buyer's fixed native sample fee")
     request.add_argument("--seller", required=True)
     request.add_argument("--buyer", required=True)
     request.add_argument("--listing-tx", required=True)
     request.add_argument("--expected-root", help="Check the finalized seller anchor against this advertised root")
+    request.add_argument("--dataset", choices=("chicago-taxi", BTC_DATASET),
+                         help="Require this onchain listing schema before preparing payment")
     request.add_argument("--rpc-url", help="Arc testnet RPC for the listing check")
     offer = commands.add_parser("offer", help="Offer the full listing at 0.10 native test USDC")
     offer.add_argument("--seller", required=True)
@@ -39,7 +58,8 @@ def main():
     try:
         seller = hex_data(args.seller, 20, "seller")
         if args.command == "listing":
-            payload = LISTING_TAG.hex() + root_hex(args.root)
+            tag = BTC_LISTING_TAG if args.dataset == BTC_DATASET else LISTING_TAG
+            payload = tag.hex() + root_hex(args.root)
             sender, value = seller, 0
         elif args.command == "offer":
             listing_tx = hex_data(args.listing_tx, 32, "listing transaction")
@@ -56,14 +76,16 @@ def main():
                 terms = verify_offer(rpc_client(args.rpc_url), seller, listing_tx, offer_tx)
                 if terms["root"] != expected:
                     raise ValueError("Full offer differs from the expected snapshot")
-                payload = PURCHASE_TAG.hex() + offer_tx[2:]
-                value = FULL_PRICE_BASE_UNITS
+                print(json.dumps(purchase_wallet_request(seller, sender, offer_tx), indent=2))
+                return
             else:
-                if args.rpc_url is not None and args.expected_root is None:
-                    raise ValueError("--rpc-url requires --expected-root")
+                if (args.rpc_url is not None or args.dataset is not None) and args.expected_root is None:
+                    raise ValueError("Supply --expected-root when using --dataset or --rpc-url")
                 if args.expected_root is not None:
                     expected = root_hex(args.expected_root)
-                    _, _, root = verify_listing(rpc_client(args.rpc_url or RPC_URL), seller, listing_tx)
+                    _, _, root, dataset = verify_listing_details(rpc_client(args.rpc_url or RPC_URL), seller, listing_tx)
+                    if args.dataset and args.dataset != (dataset or "chicago-taxi"):
+                        raise ValueError("Finalized listing dataset differs from the expected schema")
                     if root != expected:
                         raise ValueError("Finalized listing root differs from the advertised snapshot")
                 payload = REQUEST_TAG.hex() + listing_tx[2:]
@@ -71,9 +93,7 @@ def main():
     except (ValueError, OSError) as exc:
         parser.error(str(exc))
 
-    tx = {"from": sender, "to": seller, "value": hex(value), "data": "0x" + payload}
-    print(json.dumps(dict(chain_id=CHAIN_ID, chain_id_hex=hex(CHAIN_ID),
-                          method="eth_sendTransaction", params=[tx]), indent=2))
+    print(json.dumps(wallet_request(sender, seller, value, payload), indent=2))
 
 
 if __name__ == "__main__":
