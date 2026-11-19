@@ -74,3 +74,25 @@ Run `python3 -B -m unittest -v test_protocol` for a local rehearsal using fictio
 **Private delivery demo.** Set a high-entropy `UBC26_BUYER_TOKEN` for the configured buyer and share it over a private channel. Start the loopback service with `python3 seller_api.py --snapshot /tmp/taxi.json --seller "$SELLER" --buyer "$BUYER" --listing-tx "$LISTING_TX"`. Before listening, the service verifies that the snapshot matches the finalized seller commitment. Start it and confirm it is listening before paying for the sample. The buyer calls `GET /sample/<request_tx>` on port 8766 with an Authorization bearer header. The seller independently checks the request against Arc before returning the proof package. Use the same request hash to recover a lost response. This single-buyer demo uses a pre-shared credential; exposing it remotely requires a private or TLS-protected transport.
 
 To fetch from the agent, use `python3 buyer_sample.py --seller "$SELLER" --buyer "$BUYER" --listing-tx "$LISTING_TX" --request-tx "$REQUEST_TX"`. It checks Arc itself, requests the preview, validates each proof and emits the verified receipt. The receipt includes the sample price, the buyer’s actual network fee (gas used times effective gas price), and their sum in 18-decimal native test-USDC base units. It excludes the seller’s listing gas. Repeating this read never sends another payment. If the RPC has yet to index the transaction as mined or finalize its draw block, retry the read with the same transaction hash.
+
+## Full purchase on Arc
+
+A seller can offer all 64 committed rows for a fixed **0.10 test USDC**. This is an additional payment after a preview, plus gas. Each listing needs its own seller-signed offer. The seller self-transfers zero with `UBC26:offer:v1:` followed by the listing transaction hash as 32 raw bytes. The buyer pays the seller with `UBC26:purchase:v1:` followed by the offer transaction hash as 32 raw bytes. The seller only releases rows for a finalized payment from its configured buyer.
+
+1. Prepare the seller offer and sign the resulting transaction on Arc testnet. Save the confirmed hash as `OFFER_TX`.
+   ```sh
+   python3 arc_intent.py offer --seller "$SELLER" --listing-tx "$LISTING_TX"
+   ```
+2. Start the seller API with the same snapshot, buyer token and addresses used for the preview. Add `--offer-tx "$OFFER_TX"` to enable full delivery.
+3. To buy, prepare the payment using the root from the verified preview. The CLI checks the finalized offer and root before emitting the unsigned wallet request. Check the gas estimate in the wallet, sign once and save the resulting hash as `PURCHASE_TX`.
+   ```sh
+   python3 arc_intent.py purchase --seller "$SELLER" --buyer "$BUYER" \
+     --listing-tx "$LISTING_TX" --offer-tx "$OFFER_TX" --expected-root "$ROOT"
+   ```
+4. Fetch the full listing privately with the buyer token. The buyer independently checks the payment and recomputes the commitment over all 64 rows. If the response is lost, repeat this read with the same payment hash.
+   ```sh
+   python3 buyer_sample.py --seller "$SELLER" --buyer "$BUYER" \
+     --listing-tx "$LISTING_TX" --offer-tx "$OFFER_TX" --purchase-tx "$PURCHASE_TX"
+   ```
+
+Run `python3 -B -m unittest discover -v` for the offline purchase rehearsal with fictional receipts. The public Arc transaction links above cover the paid preview. A live full-purchase receipt and a valuation on the Chicago data remain pending.

@@ -1,4 +1,4 @@
-"""Serve one buyer's paid samples on loopback. Share the bearer token privately."""
+"""Serve one buyer's verified purchases and samples on loopback."""
 import argparse
 import hmac
 import json
@@ -8,10 +8,13 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 from arc_draw import RPC_URL, hex_data, rpc_client, verify_draw, verify_listing
-from sample_delivery import package, snapshot_tree
+from arc_purchase import verify_offer, verify_purchase
+from sample_delivery import check_full_rows, package, snapshot_tree
 
 
-def seller_handler(token, deliver):
+def seller_handler(token, deliver, deliver_purchase=None):
+    routes = {"sample": deliver, "purchase": deliver_purchase}
+
     class SampleHandler(BaseHTTPRequestHandler):
         def log_message(self, *args):
             # Request targets can contain credentials sent by mistake.
@@ -34,17 +37,17 @@ def seller_handler(token, deliver):
             if scheme.lower() != "bearer" or not hmac.compare_digest(supplied.encode("latin-1"), token):
                 self.reply(401, {"error": "Buyer authentication required"})
                 return
-            match = re.fullmatch(r"/sample/(0x[0-9a-fA-F]{64})", self.path)
-            if not match:
-                self.reply(404, {"error": "Unknown sample route"})
+            match = re.fullmatch(r"/(sample|purchase)/(0x[0-9a-fA-F]{64})", self.path)
+            if not match or routes[match[1]] is None:
+                self.reply(404, {"error": "Unknown delivery route"})
                 return
             try:
-                delivery = deliver(match.group(1))
+                delivery = routes[match[1]](match[2])
             except OSError:
                 self.reply(503, {"error": "Arc RPC unavailable"})
                 return
             except (ValueError, TypeError, KeyError, IndexError):
-                self.reply(409, {"error": "Could not verify a finalized draw against this listing"})
+                self.reply(409, {"error": "Could not verify payment and delivery against this listing"})
                 return
             self.reply(200, delivery)
 
@@ -57,6 +60,7 @@ def main():
     parser.add_argument("--seller", required=True)
     parser.add_argument("--buyer", required=True)
     parser.add_argument("--listing-tx", required=True)
+    parser.add_argument("--offer-tx", help="Enable full purchases for this seller offer")
     parser.add_argument("--rpc-url", default=RPC_URL)
     parser.add_argument("--port", type=int, default=8766)
     args = parser.parse_args()
@@ -69,16 +73,29 @@ def main():
         if seller == buyer:
             raise ValueError("Seller and buyer must have distinct addresses")
         listing = hex_data(args.listing_tx, 32, "listing transaction")
+        offer = hex_data(args.offer_tx, 32, "offer transaction") if args.offer_tx is not None else None
         rpc = rpc_client(args.rpc_url)
         snapshot = json.loads(args.snapshot.read_text(encoding="utf-8"))
-        _, _, root = verify_listing(rpc, seller, listing)
-        snapshot_tree(snapshot, root)
+        if offer:
+            root = verify_offer(rpc, seller, listing, offer)["root"]
+            check_full_rows(snapshot["rows"], root)
+            if snapshot["manifest"]["root"] != root:
+                raise ValueError("Snapshot manifest differs from the full offer")
+        else:
+            _, _, root = verify_listing(rpc, seller, listing)
+            snapshot_tree(snapshot, root)
 
         def deliver(request_tx):
             draw = verify_draw(rpc, seller, buyer, listing, request_tx)
             return package(snapshot, draw)
 
-        handler = seller_handler(token.encode("ascii"), deliver)
+        def deliver_purchase(purchase_tx):
+            purchase = verify_purchase(rpc, seller, buyer, listing, offer, purchase_tx)
+            rows = snapshot["rows"]
+            check_full_rows(rows, purchase["root"])
+            return {"rows": rows}
+
+        handler = seller_handler(token.encode("ascii"), deliver, deliver_purchase if offer else None)
         with ThreadingHTTPServer(("127.0.0.1", args.port), handler) as server:
             print(f"Seller API listening on http://127.0.0.1:{server.server_port}", flush=True)
             server.serve_forever()

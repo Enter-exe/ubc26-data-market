@@ -20,12 +20,13 @@ LISTING, REQUEST = "0x" + "11" * 32, "0x" + "22" * 32
 TOKEN = "offline-fixture-token"
 
 
-def fixture_responses(root):
+def fixture_responses(root, extra_transactions=(), finalized_height=13):
     responses = {("eth_chainId", ()): hex(5042002)}
     transactions = [
         (10, LISTING, SELLER, 0, 24_000, 300_000_000_001, b"UBC26:listing:v1:" + bytes.fromhex(root)),
         (11, REQUEST, BUYER, 10**16, 25_001, 400_000_000_001, b"UBC26:sample:v1:" + bytes.fromhex(LISTING[2:])),
     ]
+    transactions.extend(extra_transactions)
     for height, tx_hash, sender, value, gas_used, gas_price, data in transactions:
         block_hash = f"0x{height:064x}"
         position = dict(blockHash=block_hash, blockNumber=hex(height), transactionIndex="0x0")
@@ -40,15 +41,17 @@ def fixture_responses(root):
             hash=block_hash, number=hex(height), transactions=[tx_hash])
         for address in (BUYER, SELLER):
             responses["eth_getCode", (address, hex(height))] = "0x"
-    for tag in ("finalized", "0xd"):
-        responses["eth_getBlockByNumber", (tag, False)] = dict(
-            hash=f"0x{13:064x}", number="0xd", transactions=[])
+    for height in (13, finalized_height):
+        responses.setdefault(("eth_getBlockByNumber", (hex(height), False)), dict(
+            hash=f"0x{height:064x}", number=hex(height), transactions=[]))
+    responses["eth_getBlockByNumber", ("finalized", False)] = dict(
+        responses["eth_getBlockByNumber", (hex(finalized_height), False)])
     return responses
 
 
 @contextmanager
-def seller_endpoint(deliver):
-    with HTTPServer(("127.0.0.1", 0), seller_handler(TOKEN.encode(), deliver)) as server:
+def seller_endpoint(deliver, deliver_purchase=None):
+    with HTTPServer(("127.0.0.1", 0), seller_handler(TOKEN.encode(), deliver, deliver_purchase)) as server:
         worker = Thread(target=server.serve_forever, kwargs={"poll_interval": 0.01})
         worker.start()
         try:

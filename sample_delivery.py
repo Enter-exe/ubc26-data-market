@@ -3,7 +3,21 @@ import argparse
 import json
 from pathlib import Path
 
+from chicago_snapshot import ROW_COUNT
 from market import tree, verify
+
+
+def check_full_rows(rows, expected_root):
+    if not isinstance(rows, list) or len(rows) != ROW_COUNT:
+        raise ValueError(f"Expected {ROW_COUNT} purchased Chicago taxi rows")
+    last_id = ""
+    for row in rows:
+        if (not isinstance(row, list) or len(row) != 3 or not isinstance(row[0], str) or
+                row[0] <= last_id or any(type(n) is not int or n <= 0 for n in row[1:])):
+            raise ValueError("Expected ordered unique trip IDs with positive integer miles and fares in hundredths")
+        last_id = row[0]
+    if tree(rows)[-1][0].hex() != expected_root:
+        raise ValueError("Purchased rows differ from the anchored listing")
 
 
 def positions(draw):

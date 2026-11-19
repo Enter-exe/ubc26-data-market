@@ -9,6 +9,11 @@ import argparse
 import json
 
 from arc_draw import CHAIN_ID, FEE_BASE_UNITS, LISTING_TAG, REQUEST_TAG, RPC_URL, hex_data, rpc_client, verify_listing
+from arc_purchase import FULL_PRICE_BASE_UNITS, OFFER_TAG, PURCHASE_TAG, verify_offer
+
+
+def root_hex(value):
+    return hex_data(value if value.startswith("0x") else "0x" + value, 32, "listing root")[2:]
 
 
 def main():
@@ -23,28 +28,46 @@ def main():
     request.add_argument("--listing-tx", required=True)
     request.add_argument("--expected-root", help="Check the finalized seller anchor against this advertised root")
     request.add_argument("--rpc-url", help="Arc testnet RPC for the listing check")
+    offer = commands.add_parser("offer", help="Offer the full listing at 0.10 native test USDC")
+    offer.add_argument("--seller", required=True)
+    offer.add_argument("--listing-tx", required=True)
+    purchase = commands.add_parser("purchase", help="Check the finalized full offer and prepare its payment")
+    for arg in ("--seller", "--buyer", "--listing-tx", "--offer-tx", "--expected-root"):
+        purchase.add_argument(arg, required=True)
+    purchase.add_argument("--rpc-url", default=RPC_URL)
     args = parser.parse_args()
     try:
         seller = hex_data(args.seller, 20, "seller")
         if args.command == "listing":
-            root = args.root if args.root.startswith("0x") else "0x" + args.root
-            payload = LISTING_TAG.hex() + hex_data(root, 32, "listing root")[2:]
+            payload = LISTING_TAG.hex() + root_hex(args.root)
+            sender, value = seller, 0
+        elif args.command == "offer":
+            listing_tx = hex_data(args.listing_tx, 32, "listing transaction")
+            payload = OFFER_TAG.hex() + listing_tx[2:]
             sender, value = seller, 0
         else:
             sender = hex_data(args.buyer, 20, "buyer")
             if sender == seller:
                 raise ValueError("Seller and buyer must have distinct addresses")
             listing_tx = hex_data(args.listing_tx, 32, "listing transaction")
-            if args.rpc_url is not None and args.expected_root is None:
-                raise ValueError("--rpc-url requires --expected-root")
-            if args.expected_root is not None:
-                expected = args.expected_root
-                expected = hex_data(expected if expected.startswith("0x") else "0x" + expected, 32, "expected root")
-                _, _, root = verify_listing(rpc_client(args.rpc_url or RPC_URL), seller, listing_tx)
-                if root != expected[2:]:
-                    raise ValueError("Finalized listing root differs from the advertised snapshot")
-            payload = REQUEST_TAG.hex() + listing_tx[2:]
-            value = FEE_BASE_UNITS
+            if args.command == "purchase":
+                expected = root_hex(args.expected_root)
+                offer_tx = hex_data(args.offer_tx, 32, "offer transaction")
+                terms = verify_offer(rpc_client(args.rpc_url), seller, listing_tx, offer_tx)
+                if terms["root"] != expected:
+                    raise ValueError("Full offer differs from the expected snapshot")
+                payload = PURCHASE_TAG.hex() + offer_tx[2:]
+                value = FULL_PRICE_BASE_UNITS
+            else:
+                if args.rpc_url is not None and args.expected_root is None:
+                    raise ValueError("--rpc-url requires --expected-root")
+                if args.expected_root is not None:
+                    expected = root_hex(args.expected_root)
+                    _, _, root = verify_listing(rpc_client(args.rpc_url or RPC_URL), seller, listing_tx)
+                    if root != expected:
+                        raise ValueError("Finalized listing root differs from the advertised snapshot")
+                payload = REQUEST_TAG.hex() + listing_tx[2:]
+                value = FEE_BASE_UNITS
     except (ValueError, OSError) as exc:
         parser.error(str(exc))
 
