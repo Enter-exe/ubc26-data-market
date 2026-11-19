@@ -2,6 +2,12 @@
 
 A seller commits to 64 hourly BTC–USD training examples. An agent pays for eight examples selected through Arc, checks their Merkle proofs and estimates the training value of the other 56. If that value covers the full price and gas within its remaining budget, it prepares a wallet payment. After delivery the buyer can measure what its money bought.
 
+## Show the judges
+
+Download and open [demo.html](demo.html) in a desktop browser. All assets and both recorded BTC buyer runs are embedded, so the console also works offline. With `python3 desk.py` running, the same console is available at [the BTC demo route](http://127.0.0.1:8765/btc). Click **Replay decision** to follow the eight-row draw, valuation and transaction trace. Switch the reward from **0.10** to **0.20** to see the same preview trigger a buy, then compare the forecast with the actual holdout result. Expand **Inspect sample & payment evidence** to recompute all eight Merkle proofs in the browser and inspect the separate Chicago testnet receipt. [Watch the 21-second walkthrough](proofdesk-demo.webm).
+
+The console replays output from the Python buyer with a fixed draw and simulated BTC payments. Refresh its embedded receipts after importing new fixtures with `python3 build_demo.py --snapshot /tmp/btc-listing.json --benchmark /tmp/btc-buyer.json`.
+
 ## Run the BTC training-data demo
 
 The seller source is historical Coinbase Exchange BTC–USD candles. Each example pairs the preceding hour’s high–low range with the current hour’s range. Ranges are relative to the opening price, rounded to basis points and stored plus one. Adjacent examples share an hourly range. These public candles stand in for a seller feed; anyone can recreate this particular listing from Coinbase. [Coinbase candle API](https://docs.cdp.coinbase.com/api-reference/exchange-api/rest-api/products/get-product-candles)

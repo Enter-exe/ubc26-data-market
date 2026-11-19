@@ -31,7 +31,7 @@ def screen(receipt):
                 if receipt["delivered_error"] is not None else "")
     return f"""<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Buyer desk · UBC26</title><link rel="stylesheet" href="/desk.css"><main>
-<header><strong>Freight data market</strong><span>UBC26 / Simulated payments</span></header>
+<header><strong>Freight data market</strong><a href="/btc">Open BTC buyer console</a><span>UBC26 / Simulated payments</span></header>
 <h1>Buyer desk</h1><form action="/"><label>Market conditions<select name="scenario">{options}</select></label>
 <label>Dataset price · credits<input name="price" type="number" min="1" max="100" required value="{price}"></label>
 <input type="hidden" name="seed" value="{seed}"><button>Evaluate offers</button></form>
@@ -48,6 +48,9 @@ def screen(receipt):
 class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         url = urlsplit(self.path)
+        if url.path == "/btc":
+            self.respond("text/html", Path(__file__).with_name("demo.html").read_text(encoding="utf-8"))
+            return
         if url.path == "/desk.css":
             self.respond("text/css", Path(__file__).with_name("desk.css").read_text())
             return
@@ -80,5 +83,6 @@ class Handler(BaseHTTPRequestHandler):
 
 
 if __name__ == "__main__":
+    print("BTC judge demo: http://127.0.0.1:8765/btc", flush=True)
     print("Buyer desk: http://127.0.0.1:8765", flush=True)
     ThreadingHTTPServer(("127.0.0.1", 8765), Handler).serve_forever()

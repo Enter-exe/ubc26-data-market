@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#161915"><title>Proofdesk · Buyer console</title>
+<style>
+:root{--ink:#1e211c;--paper:#f6f5ef;--muted:#5e6359;--line:#d7d8cd;--orange:#ff9155;--panel:#1a211d;--mono:"IBM Plex Mono","SFMono-Regular",Consolas,monospace;--sans:"DM Sans","Helvetica Neue",Arial,sans-serif}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:16px;-webkit-font-smoothing:antialiased}button,select{font:inherit;color:inherit}button,summary{cursor:pointer}button:focus-visible,a:focus-visible,summary:focus-visible{outline:3px solid #ec7940;outline-offset:4px}a{color:inherit;text-underline-offset:4px}h1,h2,h3,p{margin:0}button{border:0}.wrap{width:min(1320px,100%);margin:0 auto;padding-inline:clamp(20px,4.8vw,75px)}
+header{background:#191c18;color:#f8f8f1}.bar{display:flex;align-items:center;gap:44px;height:66px}.brand{display:inline-flex;align-items:center;gap:11px;font-weight:720;letter-spacing:-1px;font-size:23px;text-decoration:none}.symbol{display:flex;align-items:center;gap:3px;transform:skew(-16deg)}.symbol i{width:6px;height:13px;background:var(--orange)}.symbol i:nth-child(2){height:23px}.symbol i:nth-child(3){height:17px}nav{display:flex;align-self:stretch;gap:26px}nav a{display:grid;align-items:center;text-decoration:none;font-size:13px;color:#c7c9c1;border-bottom:2px solid transparent}nav a:hover{color:white}nav a:first-child{color:white;border-color:var(--orange)}.mode{display:flex;align-items:center;gap:9px;margin-left:auto;font:11px var(--mono);color:#d7dbd2}.dot{width:7px;height:7px;border-radius:50%;background:var(--orange);display:inline-block}
+.intro{display:flex;justify-content:space-between;align-items:end;gap:20px;padding:39px 0 26px}.intro h1{font-size:clamp(44px,5.2vw,72px);line-height:.98;letter-spacing:-.066em;font-weight:600}.intro p{line-height:1.5;margin-top:11px;color:var(--muted);max-width:64ch}.play{background:var(--ink);color:white;border-radius:6px;padding:13px 20px;display:inline-flex;align-items:center;justify-content:center;gap:11px;white-space:nowrap;font-weight:600;font-size:14px}.play:hover{background:#394139}.play svg{width:15px;height:15px}
+.grid{display:grid;grid-template-columns:minmax(0,1.85fr) minmax(290px,1fr);gap:16px}.market,.decision{border-radius:11px;padding:clamp(20px,2.2vw,31px);min-width:0}.market{background:var(--panel);color:#f5f7ef;display:flex;flex-direction:column;overflow:hidden}.panelhead,.cardhead,.sectionhead,.legend,.rowline,.metrichead{display:flex;align-items:center;justify-content:space-between;gap:12px}.instrument{display:flex;align-items:center;gap:11px}.coin{background:var(--orange);color:#21170f;width:38px;height:38px;display:grid;place-items:center;border-radius:50%;font:bold 26px Georgia,serif;transform:rotate(10deg)}.instrument h2{font-size:24px;letter-spacing:-1px}.instrument small{display:block;color:#b8c3b8;font-size:12px;margin-top:2px}.chip,.kicker,.eyebrow{font:10px var(--mono);letter-spacing:.1em;text-transform:uppercase}.chip{white-space:nowrap;border:1px solid #536052;border-radius:20px;color:#d9dfd6;padding:6px 10px}.chartheading{display:flex;align-items:baseline;justify-content:space-between;margin:26px 0 4px;color:#bbc6bb}.chartheading span{font:10px var(--mono);letter-spacing:.05em}.chartheading strong{font:500 14px var(--sans);letter-spacing:0;color:#e5eae2}.chart{width:100%;height:auto;min-height:145px;flex:1}.legend{border-top:1px solid #3c443b;padding-top:14px;margin-top:9px;color:#cbd1c7;font:11px var(--mono);flex-wrap:wrap}.legend .key{display:inline-block;width:8px;height:8px;margin-right:5px;border-radius:2px;background:var(--orange)}.legend .hidden{background:#738071}.legend .count{color:#f7d8bf;margin-left:auto}
+.decision{border:1px solid var(--line);background:#fcfcf7;display:flex;flex-direction:column}.decision h2,.sectionhead h2{font-size:22px;font-weight:610;letter-spacing:-.045em}.eyebrow{color:#697062}.toggle{display:flex;padding:3px;gap:3px;background:#e9ebe2;border-radius:6px}.toggle button{flex:1;border-radius:4px;font:600 13px var(--mono);padding:7px 8px;background:transparent;min-height:32px}.toggle button[aria-pressed=true]{color:white;background:#30372e}.reward{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:16px;font-size:12px;color:var(--muted)}.verdict{font-size:clamp(46px,4.4vw,65px);line-height:1;letter-spacing:-.065em;font-weight:610;margin:14px 0 4px}.decision[data-action=buy] .verdict{color:#2c6540}.explain{font-size:13px;min-height:35px;line-height:1.4;color:var(--muted)}.metrics{margin-top:auto;padding-top:12px}.metrichead{font-size:12px}.metrichead b{font:550 13px var(--mono)}.meter{height:5px;background:#e8e9df;border-radius:3px;overflow:hidden;margin:6px 0 10px}.meter i{display:block;background:#c56835;height:100%;transition:width .3s}.meter.cost i{background:#52604e}.unit{font:10px var(--mono);color:var(--muted)}
+.trace{margin:26px 0 0}.sectionhead{margin-bottom:12px}.runstate{font:11px var(--mono);color:var(--muted)}.tracegrid{display:grid;grid-template-columns:1.02fr 1fr;border:1px solid var(--line);background:#fbfbf6;border-radius:9px;overflow:hidden}.track{padding:16px 22px}.track+.track{border-left:1px solid var(--line)}.tracktitle{display:flex;align-items:center;gap:9px;font-size:15px;font-weight:640;letter-spacing:-.03em}.tracktitle svg{height:18px;width:18px;stroke:#5c674f;fill:none;stroke-width:1.6}.track ol{list-style:none;margin:12px 0 0;padding:0}.track li{display:flex;gap:10px;align-items:baseline;margin:0;padding:7px 0;border-top:1px solid #e4e6dc;line-height:1.35;font-size:13px}.track li span{font:10px var(--mono);color:#777d70;flex:none}.track li.pending{color:#767b73}.holdout{margin-top:12px;padding:13px 16px;background:#f4e8d9;border-left:3px solid #a8582b;font-size:14px;line-height:1.5}
+details{margin:18px 0 30px;border-block:1px solid var(--line)}summary{padding:15px 2px;font-size:15px;font-weight:620}details p{font-size:13px;color:var(--muted);line-height:1.5;margin:8px 0}.proofgrid{display:grid;grid-template-columns:1fr .94fr;gap:30px;padding:4px 0 18px}.proofgrid table{border-collapse:collapse;width:100%;font:12px var(--mono)}th,td{text-align:left;border-bottom:1px solid var(--line);padding:7px 4px}th{font-size:10px;color:var(--muted)}.proofgrid h3{font-size:15px;margin:12px 0 5px}.proofgrid code{font:12px var(--mono);overflow-wrap:anywhere}.proofgrid a{font-weight:650}footer{color:var(--muted);font:11px var(--mono);margin:0 0 24px}
+@media(max-width:800px){.grid{grid-template-columns:minmax(0,1.4fr) minmax(250px,1fr)}.wrap{padding-inline:22px}.market,.decision{padding:19px}.bar{gap:24px}.intro{padding-top:26px}.legend{font-size:10px}.panelhead{gap:4px}.chip{font-size:9px;padding:5px}.track{padding:15px}}
+@media(max-width:660px){.bar{height:56px;gap:16px}.brand{font-size:20px}nav{display:none}.grid,.tracegrid,.proofgrid{grid-template-columns:1fr}.intro{align-items:start;flex-direction:column;padding:24px 0 18px;gap:12px}.intro p{font-size:14px}.play{padding:10px 16px}.market,.decision{padding:18px}.track+.track{border-left:0;border-top:1px solid var(--line)}.chart{min-height:140px}.verdict{font-size:48px}.explain{min-height:0}.proofgrid{gap:8px}.reward{margin-top:10px}.trace{margin-top:22px}.mode{font-size:10px}}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+</style>
+</head>
+<body>
+<header><div class="wrap bar"><a class="brand" href="#console"><span class="symbol" aria-hidden="true"><i></i><i></i><i></i></span> Proofdesk</a><nav aria-label="Workspace"><a href="#console">Buyer console</a><a id="prooflink" href="#evidence">Evidence</a></nav><div class="mode"><span class="dot"></span>Offline replay</div></div></header>
+<main class="wrap" id="console">
+<section class="intro"><div><h1>Buyer console</h1><p>Follow a data-buying agent from its first verified sample to its final decision.</p></div><button id="play" class="play"><svg viewBox="0 0 14 14" aria-hidden="true"><path fill="currentColor" d="M3 1.5 12 7l-9 5.5z"/></svg><span>Replay decision</span></button></section>
+<div class="grid">
+<section class="market" aria-label="Market sample"><div class="panelhead"><div class="instrument"><span class="coin" aria-hidden="true">₿</span><div><h2>BTC / USD</h2><small>Coinbase Exchange · Hourly candles</small></div></div><span class="chip">Jan 2024</span></div><div class="chartheading"><strong>Sampled hourly ranges</strong><span>BASIS POINTS</span></div><svg class="chart" id="chart" viewBox="0 0 680 178" role="img" aria-label="Hourly price range at each of eight chain-selected positions in the 64-row listing"></svg><div class="legend"><span><i class="key"></i>Verified sample</span><span><i class="key hidden"></i>Withheld</span><span class="count" id="count"></span></div></section>
+<section class="decision" id="decision"><div class="cardhead"><h2>Agent decision</h2><span class="eyebrow">Seed 26</span></div><div class="reward"><span>Reward per bp saved</span><div class="toggle" aria-label="Reward per basis point"><button data-reward="0.10">0.10</button><button data-reward="0.20">0.20</button></div></div><div class="verdict" id="verdict"></div><p class="explain" id="explain"></p><div class="metrics"><div class="metrichead"><span>Value of 56 more rows</span><b id="value"></b></div><div class="meter"><i id="valuebar"></i></div><div class="metrichead"><span>Full price + gas</span><b id="cost"></b></div><div class="meter cost"><i id="costbar"></i></div><span class="unit">Amounts in test USDC</span></div></section></div>
+<section class="trace"><div class="sectionhead"><h2>Run trace</h2><span class="runstate" aria-live="polite" id="stage"></span></div><div class="tracegrid"><div class="track"><div class="tracktitle"><svg viewBox="0 0 20 20" aria-hidden="true"><rect x="4" y="4" width="12" height="12" rx="3"/><path d="M8 8h4v4H8zM7 1v3m6-3v3M7 16v3m6-3v3M1 7h3m-3 6h3m12-6h3m-3 6h3"/></svg>Agent view</div><ol id="agent"></ol></div><div class="track"><div class="tracktitle"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m10 2 7 4v8l-7 4-7-4V6l7-4zm0 8 7-4m-7 4L3 6m7 4v8"/></svg>Transaction view <span class="eyebrow">Simulated</span></div><ol id="ledger"></ol></div></div><p class="holdout" id="holdout" hidden></p></section>
+<details id="evidence"><summary>Inspect sample &amp; payment evidence</summary><div class="proofgrid"><div><h3>Verified sample rows</h3><p>Current range is the training label. The prior hour’s range is the model input.</p><table><thead><tr><th>Index</th><th>Hour (UTC)</th><th>Prior bp</th><th>Current bp</th></tr></thead><tbody id="rows"></tbody></table></div><div><h3>BTC listing commitment</h3><code id="root"></code><p>Eight Merkle proofs were checked when these replay receipts were built. Only those eight rows are embedded here.</p><button id="verify" class="play">Verify eight proofs</button><p id="proof-result" aria-live="polite"></p><h3>Recorded Arc testnet payment</h3><p>The Chicago taxi preview demonstrates a real 0.01 test-USDC payment. This BTC presentation replays simulated transactions.</p><p><a href="https://explorer.testnet.arc.io/tx/0x06d228d192e63d666687d30c62f0fcbf65265a020c57abe83980f9a067946153" target="_blank" rel="noopener">Open Chicago payment ↗</a></p></div></div></details><footer>Proofdesk / UBC26 · BTC–USD data market</footer></main>
+<script type="application/json" id="recorded-runs">{"runs":{"0.10":{"mode":"simulated","seed":26,"root":"5f87d674ebc42f322b09aea47574f61f18563291d87424f332b6a7304d2b6529","indices":[33,10,14,40,54,26,41,51],"valuation":{"decision":"pass","estimated_value_base_units":"88281250000000000","price_base_units":"100000000000000000","gas_base_units":"1000000000000000","total_cost_base_units":"101000000000000000","budget_base_units":"200000000000000000","reward_base_units_per_bp":"100000000000000000","historical_draws":48,"matched_draws":8,"positive_matched_draws":5,"historical_mean_gain_bps":0.8828125,"preview_within_calibration_range":true}},"0.20":{"mode":"simulated","seed":26,"root":"5f87d674ebc42f322b09aea47574f61f18563291d87424f332b6a7304d2b6529","indices":[33,10,14,40,54,26,41,51],"valuation":{"decision":"buy","estimated_value_base_units":"176562500000000000","price_base_units":"100000000000000000","gas_base_units":"1000000000000000","total_cost_base_units":"101000000000000000","budget_base_units":"200000000000000000","reward_base_units_per_bp":"200000000000000000","historical_draws":48,"matched_draws":8,"positive_matched_draws":5,"historical_mean_gain_bps":0.8828125,"preview_within_calibration_range":true},"outcome":{"holdout_rows":64,"retained_mae_bps":39.125,"full_mae_bps":41.75,"realized_gain_bps":-2.625}}},"samples":[{"index":33,"row":["BTC-USD:1h:1704880800",83,44],"proof":["18694843ea132f408e675572b72c80e1549c5b681dda221cfe54caef3fc0ce45","d176dcdd2e0191e4ade90f877aba6785dd1f01668da611934a48bd93af487a70","363f1a7225892119bf29b23be05d912362ade71d5c75364c07783055db5b684e","ddcfaac40c90bf880fba4bc672951469e31fe0c394008377709557eb4e4b8b63","d52238fa27455cc89337f75d253b5828d90c61ec51ae43eb44e698aed4d981b9","069bc6790ca9cc26eb1902be3bee9dc0da9f953ac6ee17a52efbe06d210951d1"]},{"index":10,"row":["BTC-USD:1h:1704798000",64,48],"proof":["394103234243b6764cdd835046bcb5b67b9981807d0c9dfdf64648d437d6396b","98305cb1a09de2fe6130935ecfb1c50e01f10bc706ab699c853721b8d0624ae7","01c608a5a4a6b5a7920f0e50949d9f51fee63403413d198b1c900a173477b758","97bf9bdc6ca7b365d1f78dd106083828e102c677724f9775c0819eed67b9b4e5","5ec9757a4e1ef163e93e242b536fc58cef59bb5c50cc6a3f0018bb27b8f1bc7e","6c93ab1870f893fdb701089da4658e2108bc01f99c2f121df5214af3d629e032"]},{"index":14,"row":["BTC-USD:1h:1704812400",113,127],"proof":["9ec0ff48e8b1a7947a1a2fbf91c28cebbc73b6c2fcd68b7000c5f83edaed1820","3047eba80c213e97652010b051a5d0eebddca260169c4c46e232b319fe1d961c","80a49989a285492787cef09a1bf1c18a46cff20bf0f170ecd634a8d7d301c89a","97bf9bdc6ca7b365d1f78dd106083828e102c677724f9775c0819eed67b9b4e5","5ec9757a4e1ef163e93e242b536fc58cef59bb5c50cc6a3f0018bb27b8f1bc7e","6c93ab1870f893fdb701089da4658e2108bc01f99c2f121df5214af3d629e032"]},{"index":40,"row":["BTC-USD:1h:1704906000",116,273],"proof":["c294a17fdca259d04ac6ef156f6ae3a9d6d43c1f94f3eb9b69d4e8e5051efead","44f49424646bd902d3b1fe1873d0d658550804f99ca92174b73a509b7c37bb71","00bec7fe18eab23faa480da4119eae2e7449119cdfae38c77138187b05ab4a7e","e40b015cdc893f7ac9e744bccff75b88d827362873d4abdd674d139f9880f9ce","d52238fa27455cc89337f75d253b5828d90c61ec51ae43eb44e698aed4d981b9","069bc6790ca9cc26eb1902be3bee9dc0da9f953ac6ee17a52efbe06d210951d1"]},{"index":54,"row":["BTC-USD:1h:1704956400",105,62],"proof":["aa88bc8bdaea42a50551e6a491759dba0ea3a955e82dc0608615d149ed1e8bc4","5db8f90d08d46206891cce3df4b61071ef921a43384e6c7a5f971cc3fbb7cba5","7ea0c45b0caa6db65c8a04522f22512330e0f26f6b0d421a5529aea261064fd0","60d8a2343dda5a10c7836d8f445a72bfc02b66d5aebb231a8ff0fe9230695e2b","b939a9952bd22fc3fc853a252704034ef2080ed929517addbfa12b05d685e6e9","069bc6790ca9cc26eb1902be3bee9dc0da9f953ac6ee17a52efbe06d210951d1"]},{"index":26,"row":["BTC-USD:1h:1704855600",47,62],"proof":["db0c5a3f00e186146c633fd86dcac5fa993e432dbd58c98e57c55ff5f602ddcf","70001db53b1699bdf358e02d076d3365e956a13f5f0c3db36a1edcdd42eb1d37","fe24b95f4a3b45f291a3f3583bf1f86026e1fd9fc07693a3c8773442591016c1","43b59660ac8162fdb0a02afe282f796db0df488b0078704159eb6b84081c4732","f3e8e2e726a9e2de95c6900a93879493fb93ed5daa94b59ac1c1c3cae84abc9d","6c93ab1870f893fdb701089da4658e2108bc01f99c2f121df5214af3d629e032"]},{"index":41,"row":["BTC-USD:1h:1704909600",273,163],"proof":["de98f1ccb8211b31efebd40a0dfc279fb2f83a64bd5da4304ec689fdb6637e88","44f49424646bd902d3b1fe1873d0d658550804f99ca92174b73a509b7c37bb71","00bec7fe18eab23faa480da4119eae2e7449119cdfae38c77138187b05ab4a7e","e40b015cdc893f7ac9e744bccff75b88d827362873d4abdd674d139f9880f9ce","d52238fa27455cc89337f75d253b5828d90c61ec51ae43eb44e698aed4d981b9","069bc6790ca9cc26eb1902be3bee9dc0da9f953ac6ee17a52efbe06d210951d1"]},{"index":51,"row":["BTC-USD:1h:1704945600",85,42],"proof":["facb3ff7addc2bea91a76ec0f0aa8652118ba28f035cac5a33c27cc8bfed3d4d","4603152cd428d7df3c7f7b5e617836de1cf0cb5eac2dd6ad2ea8dd322146f3a1","c758aca4b295ea946818b8228a0928ae924235994292cd27e5b0ef7086acdf8b","60d8a2343dda5a10c7836d8f445a72bfc02b66d5aebb231a8ff0fe9230695e2b","b939a9952bd22fc3fc853a252704034ef2080ed929517addbfa12b05d685e6e9","069bc6790ca9cc26eb1902be3bee9dc0da9f953ac6ee17a52efbe06d210951d1"]}]}</script>
+<script>
+"use strict";
+const data = JSON.parse(document.getElementById("recorded-runs").textContent);
+const el = id => document.getElementById(id);
+const money = units => Number(units) / 1e18;
+const samples = [...data.samples].sort((a,b) => a.index-b.index);
+const timestamp = row => Number(row[0].split(":").pop()) * 1000;
+const hourLabel = row => new Date(timestamp(row)).toISOString().slice(5,16).replace("T"," ");
+const ns = "http://www.w3.org/2000/svg";
+function mark(parent,tag,attrs,label) {
+  const node=document.createElementNS(ns,tag);
+  Object.entries(attrs).forEach(([key,value])=>node.setAttribute(key,value));
+  if(label!==undefined) node.textContent=label;
+  parent.appendChild(node);
+  return node;
+}
+function drawChart(show) {
+  const svg=el("chart"); svg.replaceChildren();
+  const small=window.matchMedia("(max-width:660px)").matches;
+  const w=small?380:680, h=178, left=31, right=w-9, bottom=h-22, top=18;
+  svg.setAttribute("viewBox","0 0 "+w+" "+h);
+  const ceiling=Math.max(100,Math.ceil(Math.max(...samples.map(s=>s.row[2]-1))/100)*100);
+  const x=i=>left+(right-left)*i/63, y=v=>bottom-(bottom-top)*v/ceiling;
+  for (const v of [0,ceiling/2,ceiling]) {
+    mark(svg,"line",{x1:left,x2:right,y1:y(v),y2:y(v),stroke:"#465047","stroke-dasharray":"2 5"});
+    mark(svg,"text",{x:left-6,y:y(v)+3,"text-anchor":"end",fill:"#bdc7bb","font-size":10,"font-family":"monospace"},v);
+  }
+  for(let i=0;i<64;i++){
+    mark(svg,"line",{x1:x(i),x2:x(i),y1:bottom-4,y2:bottom,stroke:"#778373","stroke-width":2});
+  }
+  for(const i of [0,15,31,47,63])
+    mark(svg,"text",{x:x(i),y:h-4,"text-anchor":i===0?"start":i===63?"end":"middle",fill:"#b4bdb2","font-size":10,"font-family":"monospace"},i===0?"ROW 00":String(i).padStart(2,"0"));
+  if(show) for(const s of samples){
+    const val=s.row[2]-1, cx=x(s.index), cy=y(val);
+    const g=mark(svg,"g",{});
+    mark(g,"title",{},hourLabel(s.row)+" UTC · row "+s.index+" · "+val+" bp");
+    mark(g,"rect",{x:cx-3,y:cy,width:6,height:Math.max(1,bottom-cy),rx:1,fill:"#935f43"});
+    mark(g,"line",{x1:cx,x2:cx,y1:bottom,y2:cy,stroke:"#ed965e","stroke-width":1.3});
+    mark(g,"circle",{cx,cy,r:3.4,fill:"#ffab74",stroke:"#242c25","stroke-width":1});
+    if(!small) mark(g,"text",{x:cx,y:cy-7,"text-anchor":"middle",fill:"#f1d7be","font-family":"monospace","font-size":9},val);
+  }
+  el("count").textContent=(show?"08":"00")+" / 64 visible";
+}
+let reward="0.10", phase=4, timer;
+function lines(id,items){
+  el(id).replaceChildren();
+  items.forEach((text,i)=>{
+    const li=document.createElement("li"), seq=document.createElement("span");
+    seq.textContent=String(i+1).padStart(2,"0");
+    li.append(seq,document.createTextNode(i<phase?text:"Waiting…"));
+    if(i>=phase)li.className="pending";
+    el(id).appendChild(li);
+  });
+}
+function render() {
+  const run=data.runs[reward], v=run.valuation, buy=v.decision==="buy";
+  const value=money(v.estimated_value_base_units), cost=money(v.total_cost_base_units);
+  const valued=phase>=3, complete=phase===4;
+  document.querySelectorAll("[data-reward]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.reward===reward)));
+  el("decision").dataset.action=valued?v.decision:"";
+  el("verdict").textContent=valued?(buy?"Buy.":"Pass."):"Evaluating…";
+  el("explain").textContent=valued?(buy?"The estimated training value covers the purchase and gas.":"The agent keeps its preview. The remaining rows cost more than their estimated value."):"The buyer checks the listing and its sampled rows.";
+  el("value").textContent=valued?value.toFixed(4):"—";
+  el("valuebar").style.width=valued?100*Math.min(value/.20,1)+"%":"0";
+  el("cost").textContent=cost.toFixed(3);
+  el("costbar").style.width=100*Math.min(cost/.20,1)+"%";
+  el("stage").textContent=["Ready","1 / 4 · Listing","2 / 4 · Preview","3 / 4 · Pricing","4 / 4 · Complete"][phase];
+  el("play").querySelector("span").textContent=complete?"Replay decision":"Restart replay";
+  drawChart(phase>=2);
+  lines("agent",["Inspect a listing of 64 BTC–USD training rows.","Verify 8 selected rows against the seller’s root.",
+    "Estimate "+v.historical_mean_gain_bps.toFixed(3)+" bp less error from the full set.",
+    buy?"Buy the remaining rows and score the delivered model.":"Keep the eight rows and pass on the full dataset."]);
+  lines("ledger",["Seller anchors the listing’s Merkle root.","Preview fee: 0.010 test USDC. A future block fixes the draw.",
+    "Full offer: 0.100 + 0.001 estimated gas.",
+    buy?"Full payment simulated. All 64 delivered rows verified.":"Full payment skipped. No purchase gas spent."]);
+  el("holdout").hidden=!(complete && buy);
+  if(complete && buy){
+    const o=run.outcome;
+    el("holdout").textContent="After delivery · Forecast error on "+o.holdout_rows+" unseen hours was "+o.retained_mae_bps.toFixed(3)+" bp with the preview and "+o.full_mae_bps.toFixed(3)+" bp with all rows. The purchase worsened error by "+(-o.realized_gain_bps).toFixed(3)+" bp.";
+  }
+  el("rows").replaceChildren();
+  if(phase>=2) for(const s of samples){
+    const tr=document.createElement("tr");
+    for(const t of [s.index,hourLabel(s.row),s.row[1]-1,s.row[2]-1]){
+      const td=document.createElement("td");td.textContent=t;tr.appendChild(td);
+    }
+    el("rows").appendChild(tr);
+  }
+  el("root").textContent=run.root;
+}
+async function verifyEvidence() {
+  const output=el("proof-result"), button=el("verify");
+  if(!window.crypto?.subtle){ output.textContent="Browser verification requires a secure context. Open the file locally or through HTTPS."; return; }
+  button.disabled=true;
+  try {
+    const reference=data.runs[reward], ids=reference.indices;
+    const enc=new TextEncoder();
+    const hash=async bytes=>new Uint8Array(await crypto.subtle.digest("SHA-256",bytes));
+    if(samples.length!==8 || new Set(ids).size!==8 || new Set(samples.map(s=>s.index)).size!==8) throw Error();
+    for(const sample of samples) {
+      let i=sample.index;
+      if(!Number.isInteger(i)||i<0||i>=64||!ids.includes(i)||sample.proof.length!==6) throw Error();
+      let node=await hash(enc.encode("row:"+JSON.stringify([i,...sample.row])));
+      for(const hex of sample.proof){
+        if(!/^[a-f0-9]{64}$/.test(hex)) throw Error();
+        const sibling=Uint8Array.from(hex.match(/../g),c=>parseInt(c,16));
+        const bytes=new Uint8Array(69);bytes.set(enc.encode("node:"));
+        bytes.set(i%2?sibling:node,5);bytes.set(i%2?node:sibling,37);
+        node=await hash(bytes);i=Math.floor(i/2);
+      }
+      if(Array.from(node,b=>b.toString(16).padStart(2,"0")).join("")!==reference.root) throw Error();
+    }
+    output.textContent="Verified 8 of 8 against the BTC listing root in this browser.";
+  } catch {output.textContent="Verification failed. A row or proof differs from the listing commitment.";}
+  finally {button.disabled=false;}
+}
+el("verify").addEventListener("click",verifyEvidence);
+function replay(){
+  clearInterval(timer);phase=1;render();
+  timer=setInterval(()=>{phase++;render();if(phase===4)clearInterval(timer);},1600);
+}
+el("play").addEventListener("click",replay);
+document.querySelectorAll("[data-reward]").forEach(b=>b.addEventListener("click",()=>{
+  clearInterval(timer);reward=b.dataset.reward;phase=4;render();
+}));
+el("prooflink").addEventListener("click",()=>{el("evidence").open=true;});
+window.matchMedia("(max-width:660px)").addEventListener("change",()=>drawChart(phase>=2));
+render();
+</script></body></html>
