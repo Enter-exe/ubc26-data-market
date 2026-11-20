@@ -5,17 +5,31 @@ globalThis.Showdown = (() => {
   const hexHash = /^[0-9a-f]{64}$/;
   const digest = async bytes => new Uint8Array(await crypto.subtle.digest("SHA-256", bytes));
 
-  // Mirror btc_buyer.rehearse and arc_draw.draw_indices using the offline block fixture.
-  async function replayDraw(root, seed) {
-    if (typeof root !== "string" || !hexHash.test(root) || !Number.isSafeInteger(seed)) {
+  const fromHex = hex => Uint8Array.from(hex.match(/../g), byte => parseInt(byte, 16));
+
+  async function replayDraw({root, seed, mode}, draw) {
+    if (typeof root !== "string" || !hexHash.test(root)) {
       throw Error("Invalid BTC replay draw inputs.");
     }
     const domain = encoder.encode("UBC26:draw:v1:");
-    const request = await digest(encoder.encode("offline BTC preview " + seed));
-    const block = await digest(encoder.encode("offline BTC draw block"));
+    let request, block;
+    if (mode === "modeled" || mode === "recorded" || draw) {
+      if (draw?.dataset !== "btc-usd-hourly" || draw.root !== root ||
+          !Number.isSafeInteger(draw.request_block) || draw.request_block < 0 ||
+          draw.draw_block !== draw.request_block + 2 ||
+          ![draw.request_tx, draw.draw_block_hash].every(s => /^0x[0-9a-f]{64}$/i.test(s))) {
+        throw Error("Invalid Arc BTC draw inputs.");
+      }
+      request = fromHex(draw.request_tx.slice(2));
+      block = fromHex(draw.draw_block_hash.slice(2));
+    } else {
+      if (!Number.isSafeInteger(seed)) throw Error("Invalid simulated BTC draw seed.");
+      request = await digest(encoder.encode("offline BTC preview " + seed));
+      block = await digest(encoder.encode("offline BTC draw block"));
+    }
     const input = new Uint8Array(domain.length + 3 * 32 + 4);
     input.set(domain);
-    input.set(Uint8Array.from(root.match(/../g), byte => parseInt(byte, 16)), domain.length);
+    input.set(fromHex(root), domain.length);
     input.set(request, domain.length + 32);
     input.set(block, domain.length + 64);
     const view = new DataView(input.buffer);
@@ -71,7 +85,7 @@ globalThis.Showdown = (() => {
   async function evaluate(data, altered) {
     if (!globalThis.crypto?.subtle) throw Error("Proof checking requires a local file, localhost, or HTTPS.");
     const run = data.runs["0.20"];
-    const draw = await replayDraw(run.root, run.seed);
+    const draw = await replayDraw(run, data.btc_draw);
     if (!Array.isArray(run.indices) || run.indices.length !== draw.length ||
         !Array.isArray(data.samples) || data.samples.length !== draw.length ||
         !draw.every((index, i) => run.indices[i] === index && data.samples[i]?.index === index)) {

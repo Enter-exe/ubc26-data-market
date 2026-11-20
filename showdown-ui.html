@@ -19,7 +19,7 @@
 @media(max-width:720px){.mobile-status{display:block;padding:7px 0 12px;font-size:13px;color:var(--green);font-weight:650}}
 @media(prefers-reduced-motion:no-preference){.wire i{animation:send 1.35s ease-in-out both;animation-delay:calc(var(--packet)*.16s)}@keyframes send{from{left:0;opacity:0}15%{opacity:1}85%{opacity:1}to{left:100%;opacity:0}}.branch.ok,.branch.broken{animation:trace .62s ease-out}.current .step-code{animation:check .28s ease-out}@keyframes trace{from{opacity:.2}to{opacity:1}}@keyframes check{from{transform:scale(.72)}to{transform:scale(1)}}}
 </style></head>
-<body><header class="mast"><div class="wrap"><div class="brand"><svg aria-hidden="true" viewBox="0 0 28 28"><rect width="28" height="28" rx="6" fill="#213e30"/><path d="M5 19L13 7h4L9 19zm7 2 8-12 3 3-6 9z" fill="#bef0b5"/></svg>Proofdesk</div><nav class="nav" aria-label="Demo navigation"><span class="mode">BTC simulation</span><a href="demo.html">Original demo ↗</a></nav></div></header>
+<body><header class="mast"><div class="wrap"><div class="brand"><svg aria-hidden="true" viewBox="0 0 28 28"><rect width="28" height="28" rx="6" fill="#213e30"/><path d="M5 19L13 7h4L9 19zm7 2 8-12 3 3-6 9z" fill="#bef0b5"/></svg>Proofdesk</div><nav class="nav" aria-label="Demo navigation"><span class="mode" id="mode">BTC simulation</span><a href="demo.html">Original demo ↗</a></nav></div></header>
 <main class="wrap">
 <div class="hero"><div><h1>The sample showdown.</h1><p>One BTC dataset. Two deliveries. Watch the buyer catch an altered row.</p></div><div class="actions"><button id="play" class="primary"><span class="play-icon" aria-hidden="true">▶</span><span id="play-label">Run showdown</span></button><button id="next">Next step →</button></div></div>
 <div class="casebar"><div class="tabs" role="group" aria-label="Choose a case"><button data-case="0" aria-pressed="true"><b>A</b>Original sample</button><button data-case="1" aria-pressed="false"><b>B</b>Altered sample</button></div><span class="counter" id="counter">Ready to replay</span></div>
@@ -33,14 +33,15 @@
 <section class="panel trust"><div class="section-title"><span class="icon"><svg aria-hidden="true" viewBox="0 0 20 20"><path d="m10 2 7 3v5c0 4-4.5 6.8-7 8-2.5-1.2-7-4-7-8V5Z"/><path d="m6.5 9.5 2.5 2.6 4.8-5"/></svg></span><h2>Protocol ledger</h2></div>
 <div class="ledger-head"><span class="small-label">Merkle proof tree</span><span class="axis">64 leaves</span></div><svg id="tree" class="tree" viewBox="0 0 360 114" role="img" aria-label="Binary Merkle tree for the listing"></svg>
 <div class="handoff" id="handoff"></div>
+<p class="caption" id="stream-trace" hidden><span id="trace-source"></span><br><a id="preview-link">Preview payment</a> → <a id="block-link">Draw block</a></p>
 <ol id="ledger" class="ledger"></ol></section>
 <section class="panel agent" id="agent"><div class="section-title"><span class="icon"><svg aria-hidden="true" viewBox="0 0 20 20"><rect x="3" y="5" width="14" height="11" rx="3"/><path d="M10 2v3m-4 5h1m5 0h1m-6 3h5"/></svg></span><h2>Buyer agent</h2></div>
 <div class="decision-box"><span class="small-label">Purchase decision</span><div class="decision" id="decision">Standing by.</div><p class="hint" id="reason"></p></div>
-<div class="metrics"><div class="metric">Verified rows <span class="metric-val" id="verified">—</span></div><div class="metric">Estimated training value <span class="metric-val em" id="value">—</span></div><div class="metric">Full price + gas <span class="metric-val" id="cost">—</span></div></div>
+<div class="metrics"><div class="metric">Verified rows <span class="metric-val" id="verified">—</span></div><div class="metric">Estimated training value <span class="metric-val em" id="value">—</span></div><div class="metric"><span id="cost-label">Full price + gas</span> <span class="metric-val" id="cost">—</span></div></div>
 <p class="receipt" id="receipt"></p></section></div>
 <div class="compare" id="compare" hidden><div><span class="case-key">Original sample</span><p class="case-title" id="a-result"></p></div><div><span class="case-key">Altered sample</span><p class="case-title" id="b-result"></p></div></div>
 <details class="inspector" id="inspect"><summary>Inspect raw proof</summary><div class="inspect-inner"><p class="hint" id="inspect-note"></p><label id="row-label">Sample row <select id="proof-row"></select></label><pre id="raw"></pre><p><a href="demo.html#merkle">Explore the original proof tree ↗</a></p></div></details>
-<div class="foot"><p>Offline replay · This Arc protocol replay uses a fixed BTC draw and simulated payments. The browser verifies real SHA-256 proofs. The protocol’s preview fee is 0.01 test USDC.</p><button class="restart" id="reset">Reset</button></div>
+<div class="foot"><p id="replay-note">Offline replay · This Arc protocol replay uses a fixed BTC draw and simulated payments. The browser verifies real SHA-256 proofs. The protocol’s preview fee is 0.01 test USDC.</p><button class="restart" id="reset">Reset</button></div>
 <p role="status" id="announce" style="position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)"></p>
 </main>
 <!--SHOWDOWN_DATA-->
@@ -50,7 +51,9 @@
 const byId = id => document.getElementById(id);
 const replay = JSON.parse(byId("recorded-runs").textContent);
 const listing = replay.runs["0.20"];
-const formatMoney = units => "$" + (Number(units) / 1e18).toFixed(3);
+const draw = replay.btc_draw;
+const recordedDecision = listing.mode === "recorded";
+const formatMoney = units => "$" + (Number(units) / 1e18).toLocaleString("en-US",{minimumFractionDigits:3,maximumFractionDigits:recordedDecision?7:3});
 const excerpt = [...replay.samples].sort((a,b) => a.index-b.index);
 const steps = ["Listing root committed", "Eight indices selected", "Sample + proofs delivered", "Buyer verifies Merkle proofs", "Buyer makes a decision"];
 const duration = [2600, 3500, 4200, 4800, 4800, 6000];
@@ -80,10 +83,10 @@ function drawTree(samples){
 function inspect(){
   const available=phase>=3 && result;
   byId("raw").hidden=byId("row-label").hidden=!available;
-  setText("inspect-note",available?"The browser reproduced all eight indices from the simulated draw. Each row has six sibling hashes for checking membership.":"Advance to sample delivery to inspect the rows and their proofs.");
+  setText("inspect-note",available?"The browser reproduced all eight indices from "+(draw?"the Arc payment transaction and finalized block hash":"the simulated draw")+". Each row has six sibling hashes for checking membership.":"Advance to sample delivery to inspect the rows and their proofs.");
   if(!available)return;
   const sample=result.samples.find(s=>s.index===Number(byId("proof-row").value))||result.samples[0];
-  setText("raw",JSON.stringify({index:sample.index,row:sample.row,proof:sample.proof,listing_root:listing.root,simulated_seed:listing.seed,draw_order:listing.indices},null,2));
+  setText("raw",JSON.stringify({index:sample.index,row:sample.row,proof:sample.proof,listing_root:listing.root,...(draw?{arc_preview:draw}:{simulated_seed:listing.seed}),draw_order:listing.indices},null,2));
 }
 function render(){
   const samples=(phase>=3 && result)?result.samples:excerpt;
@@ -137,7 +140,7 @@ function render(){
     for(let n=0;n<8;n++){const packet=element("i","");packet.style.setProperty("--packet",n);packet.style.left=(12*n)+"%";line.append(packet)}
     handoff.append(element("span","Seller API"),line,element("span","→ Buyer inbox"));
   }else{
-    handoff.textContent=["Recorded BTC commitment","One root binds all 64 rows","Recorded draw · seed "+listing.seed,"",failed?"Dashed path · mismatched row":"Eight paths match the root",failed?"Dashed path · mismatched row":"Eight paths match the root"][phase];
+    handoff.textContent=["Recorded BTC commitment","One root binds all 64 rows",draw?"Arc draw · block #"+draw.draw_block:"Recorded draw · seed "+listing.seed,"",failed?"Dashed path · mismatched row":"Eight paths match the root",failed?"Dashed path · mismatched row":"Eight paths match the root"][phase];
   }
   const ledger=byId("ledger");ledger.replaceChildren();
   steps.forEach((label,i)=>{
@@ -157,9 +160,9 @@ function render(){
   setText("decision",error?"Replay unavailable.":headline);setText("reason",error||qualityError||messages[phase]);
   byId("agent").dataset.tone=rejected || error?"bad":phase>=4?"good":"";
   setText("verified",checked?result.verified.filter(Boolean).length+" / "+result.samples.length:"—");
-  setText("value",decided && v?formatMoney(v.estimated_value_base_units):rejected?"Skipped":"—");
-  setText("cost",formatMoney(listing.valuation.total_cost_base_units));
-  setText("receipt",decided?(rejected?"$0 spent on the full dataset.":v?.decision==="buy"?v.historical_mean_gain_bps.toFixed(2)+" bp expected gain × $"+(Number(v.reward_base_units_per_bp)/1e18).toFixed(2)+"/bp. Simulated purchase.":"Recorded pass · full purchase skipped."):"BTC buyer replay · no wallet signature required.");
+  setText("value",decided && v?(v.estimated_value_base_units===undefined?"Skipped":formatMoney(v.estimated_value_base_units)):rejected?"Skipped":"—");
+  setText("cost",formatMoney(listing.valuation.total_cost_base_units ?? listing.valuation.price_base_units));
+  setText("receipt",decided?(rejected?"$0 spent on the full dataset.":v?.decision==="buy"?v.historical_mean_gain_bps.toFixed(2)+" bp expected gain × $"+(Number(v.reward_base_units_per_bp)/1e18).toFixed(2)+"/bp. "+(recordedDecision?"Recorded buy decision.":"Simulated purchase."):"Recorded pass · full purchase skipped."):"BTC buyer replay · no wallet signature required.");
   const compare=byId("compare");compare.hidden=!(caseId && decided && firstVerdict);
   if(!compare.hidden){setText("a-result",firstVerdict);setText("b-result",currentVerdict+" · "+result.verified.filter(Boolean).length+"/8 verified")}
   inspect();setText("announce",(caseId?"Altered sample. ":"Original sample. ")+(error||headline));
@@ -197,6 +200,20 @@ byId("next").onclick=()=>{playing=false;advance()};
 document.querySelectorAll("[data-case]").forEach(b=>b.onclick=()=>{playing=false;firstVerdict="";enter(Number(b.dataset.case),0)});
 byId("reset").onclick=()=>{playing=false;firstVerdict="";enter(0,0)};
 byId("proof-row").onchange=inspect;
+if(draw){
+  setText("mode","Arc Testnet replay");
+  setText("cost-label",recordedDecision?(listing.valuation.total_cost_base_units?"Offer + quoted gas":"Full offer price"):"Modeled full price + gas");
+  setText("trace-source",(draw.quicknode_streams?"QuickNode Streams":"Arc RPC")+" · Arc Testnet");
+  const origin=draw.quicknode_streams?"QuickNode Streams delivered blocks verified against Arc RPC.":"Arc RPC verified the listing and preview payment.";
+  const decision=recordedDecision?"The buyer’s recorded decision uses the signed offer and available funds. Full purchase settlement is outside this replay.":"The full purchase decision and its costs are modeled.";
+  setText("replay-note",origin+" The buyer paid 0.01 test USDC for the preview. This page reconstructs its eight BTC rows from the seller snapshot. "+decision);
+  byId("stream-trace").hidden=false;
+  const explorer="https://explorer.testnet.arc.io/";
+  byId("preview-link").href=explorer+"tx/"+draw.request_tx;
+  setText("preview-link","Preview · #"+draw.request_block);
+  byId("block-link").href=explorer+"block/"+draw.draw_block;
+  setText("block-link","Draw · #"+draw.draw_block);
+}
 const monthFormat=new Intl.DateTimeFormat("en",{month:"short",year:"numeric",timeZone:"UTC"});
 const sampleMonths=excerpt.map(s=>monthFormat.format(Number(s.row[0].split(":").pop())*1000));
 const months=[...new Set(sampleMonths)];

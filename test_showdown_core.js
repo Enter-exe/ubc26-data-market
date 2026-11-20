@@ -101,3 +101,29 @@ print(json.dumps(dict(runs={"0.20": dict(draw, seed=seed)}, samples=package(snap
     assert.equal(damaged.verified.filter(Boolean).length, 7);
   }
 });
+
+test("the streamed replay derives positions from the recorded Arc hashes and preserves a pass", async () => {
+  const data = structuredClone(replay);
+  const run = data.runs["0.20"];
+  const hash = text => "0x" + require("node:crypto").createHash("sha256").update(text).digest("hex");
+  data.btc_draw = {
+    dataset: "btc-usd-hourly", root: run.root, request_tx: hash("offline BTC preview " + run.seed),
+    draw_block_hash: hash("offline BTC draw block"), request_block: 72, draw_block: 74,
+  };
+  run.mode = "modeled";
+  delete run.seed;
+  run.valuation.decision = "pass";
+  assert.equal((await Showdown.evaluate(data, false)).run.valuation.decision, "pass");
+  assert.equal((await Showdown.evaluate(data, true)).run, null);
+  for (const edit of [
+    draw => { draw.request_tx = hash("different payment"); },
+    draw => { draw.draw_block_hash = hash("different block"); },
+    draw => { draw.root = "11".repeat(32); },
+    draw => { draw.dataset = "taxi"; },
+    draw => { draw.draw_block++; },
+  ]) {
+    const modified = structuredClone(data);
+    edit(modified.btc_draw);
+    await assert.rejects(Showdown.evaluate(modified, false), /draw/i);
+  }
+});

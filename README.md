@@ -4,7 +4,9 @@ A seller commits to 64 hourly BTC–USD training examples. An agent pays for eig
 
 ## Show the judges
 
-Open [the BTC showdown](showdown.html) locally, or run `python3 desk.py` and visit [the BTC dashboard](http://127.0.0.1:8765/btc). **Run showdown** follows the same sample through two deliveries. The browser reproduces the eight indices from the listing root and simulated seed, then checks the delivery order. The first case verifies all eight rows and shows the buyer's recorded decision. In the second, one hourly BTC range changes after commitment. The browser recomputes the proofs, identifies the changed row and stops the full purchase before valuation. The replay uses historical Coinbase data, a fixed draw and simulated BTC payments. The 0.01 test-USDC preview fee is separate from the full purchase.
+Open [the Bitcoin showdown](showdown.html) locally, or run `python3 desk.py` and visit [the BTC dashboard](http://127.0.0.1:8765/btc). Select **Run showdown**. The seller committed 64 historical Coinbase BTC–USD rows on Arc Testnet. The buyer paid **0.01 test USDC** for a preview, plus **0.000573** in gas. Two blocks later, the draw selected rows **50, 53, 60, 47, 38, 55, 63, 49**. The browser reproduces the selection and verifies the eight Merkle proofs offline. In the altered case, changing one range breaks its proof and the agent stops before pricing.
+
+In the original delivery the buyer estimated **0.2828125 test USDC** of additional training value against **0.1005834** for the full dataset including quoted gas. It recommended buying. The only buyer payment executed was for the preview. [Listing commitment](https://testnet.arcscan.app/tx/0xd334d50ff26656d8891d5990cffe9c60e1591949d51c7cf72a0f1c070c1889b1) · [Full-price offer](https://testnet.arcscan.app/tx/0x4f344944b484f2b9ec4dce47c1dfe69e656210652c730f1335880d5278d7103c) · [Preview payment](https://testnet.arcscan.app/tx/0x19a8667c21d519f9716aa748658799763125aa0946001907290d828cbfbd956b) · [Buyer decision](examples/arc-btc-decision.json)
 
 ## Explore the original demo
 
@@ -12,7 +14,7 @@ Open [the BTC showdown](showdown.html) locally, or run `python3 desk.py` and vis
 
 Download and open [demo.html](demo.html) in a desktop browser. All assets and both recorded BTC buyer runs are embedded, so the console also works offline. With `python3 desk.py` running, the same console is available at [the original demo route](http://127.0.0.1:8765/demo.html). Click **Play exchange** or select a step to follow the seller commitment, Arc draw, private API delivery, proof check and buying decision. During **Deliver**, the request travels to the API and eight row packets arrive in the agent inbox. Click a delivered index to inspect its actual training values and six hash joins on the 64-leaf Merkle tree. Switch the reward from **0.10** to **0.20** to see the same preview trigger a buy, then compare the forecast with the actual holdout result. Expand **Inspect sample & payment evidence** to recompute all eight BTC Merkle proofs in the browser. **Reproduce Chicago draw** replays the selection from the recorded testnet payment, seller commitment and future block hash, and checks the eight indices against the public receipt. [Watch the 21-second walkthrough](proofdesk-demo.webm).
 
-Rebuild the standalone showdown from the original console’s embedded evidence with `python3 build_demo.py --showdown`. To refresh the replay in both pages after importing new fixtures, run `python3 build_demo.py --snapshot /tmp/btc-listing.json --benchmark /tmp/btc-buyer.json`.
+Rebuild the standalone showdown from its embedded evidence with `python3 build_demo.py --showdown`. To regenerate the paid showdown from the seller snapshot and the saved buyer decision, use `python3 build_demo.py --snapshot /tmp/btc-listing.json --benchmark /tmp/btc-buyer.json --btc-draw examples/arc-btc-decision.json`. To regenerate both pages with simulated draws instead, run `python3 build_demo.py --snapshot /tmp/btc-listing.json --benchmark /tmp/btc-buyer.json`.
 
 ## Run the BTC training-data demo
 
@@ -50,7 +52,7 @@ python3 btc_buyer.py assess --seller "$SELLER" --buyer "$BUYER" --listing-tx "$L
   --benchmark /tmp/btc-buyer.json
 ```
 
-**Using QuickNode for the Bitcoin demo.** The seller supplies Coinbase BTC–USD rows. QuickNode Streams supplies the Arc payment and future block that select the eight rows. After paying for the BTC listing, configure the same [Stream filter](quicknode_filter.js) over its payment block through payment block + 2, inclusive. Save those delivery files in a BTC-specific directory. For either `decide` or `assess`, replace `--request-tx "$REQUEST_TX"` above with `--stream-delivery /path/to/btc-deliveries/*.json`. The buyer checks the BTC listing tag, verifies the draw and sample, then prices the remaining 56 market-data rows. The published Chicago receipts demonstrate the earlier transport run. The current Bitcoin dashboard still replays a simulated payment until a BTC-specific payment is captured.
+**Using QuickNode for the Bitcoin demo.** The seller supplies Coinbase BTC–USD rows. QuickNode Streams supplies the Arc payment and future block that select the eight rows. After paying for the BTC listing, configure the same [Stream filter](quicknode_filter.js) over its payment block through payment block + 2, inclusive. Save those delivery files in a BTC-specific directory. For either `decide` or `assess`, replace `--request-tx "$REQUEST_TX"` above with `--stream-delivery /path/to/btc-deliveries/*.json`. The buyer checks the BTC listing tag, verifies the draw and sample, then prices the remaining 56 market-data rows. The BTC payment and draw finalized in blocks **73152620–73152622**. QuickNode delivered those three blocks to the buyer, which independently verified the draw against Arc RPC. The saved [Bitcoin webhook deliveries](examples/quicknode-btc-stream) can replace the live stream when replaying this purchase decision.
 
 ## Run the synthetic freight demo
 
@@ -83,35 +85,35 @@ The larger protocol adds seller collateral, stronger resistance to block-propose
 
 ## Proposed hackathon entry
 
-Enter Agentic Payments & AI and opt in to Best use of Arc. The buyer has paid for a verified Chicago taxi preview on Arc testnet. The remaining payment milestone is to settle the full purchase when estimated utility covers its price and gas within the buyer's budget. The BTC buyer rehearses the valuation and verified delivery on historical Coinbase data.
+Enter Agentic Payments & AI and opt in to Best use of Arc. The buyer paid for the Bitcoin preview on Arc Testnet, verified all eight proofs and priced the remaining 56 rows. Full purchase settlement is a separate milestone.
 
 The track and Arc awards can stack ($2,000 and $1,000), alongside an overall award and qualifying bounties. Solana is an alternative chain award ($1,500). Teams select one chain award. Submit a public repo, working demo, technical README and 2–3 minute video by November 20 at noon Central. Finalists must attend the November 21 closing ceremony in person for prizes. [Official guide](https://docs.google.com/document/d/1QaySCo7u3VxMVNdk3C5Ab3ewc2E46AuLntti-Uzx5EY/edit) · [Devpost](https://ubc-hackathon-2026.devpost.com/)
 
 ## QuickNode Streams bounty setup
 
-In the Streams buyer flow, QuickNode supplies two inputs the buyer needs to unlock a preview: the sample payment transaction and the hash of the block two heights later. The buyer discovers the payment from the delivery, combines it with the listing root and future block hash to select eight rows, and independently checks the payment and finality against Arc. The seller serves the rows privately through its authenticated API. The BTC showdown uses its existing offline replay. The historical Stream below targets the **paid Chicago preview**.
+The **Bitcoin** demo uses a completed, three-block QuickNode Stream on Arc Testnet. The Stream captures the 0.01 test-USDC preview payment and the hash of the finalized block two heights later. The buyer combines those with the seller’s listing root to select eight rows, independently checks Arc finality, then retrieves the rows and Merkle proofs from the seller’s authenticated API. Coinbase supplies the historical BTC prices. [QuickNode Stream](https://dashboard.quicknode.com/streams/1ca9b32c-e4aa-4ef5-9a67-01e9bb273acf) · [Three webhook deliveries](examples/quicknode-btc-stream) · [Verified Bitcoin decision](examples/arc-btc-decision.json)
 
-| QuickNode setting | Configuration used for the hosted backfill |
+| QuickNode setting | Bitcoin backfill |
 | --- | --- |
 | Network and dataset | Arc Testnet · Block |
-| Range | Historical, start **72891092**, end **72891094**, inclusive. Use batch size 1. |
-| JavaScript filter | Paste [quicknode_filter.js](quicknode_filter.js). Keep each block height and hash, and extract transfers of 0.01 test USDC carrying the sample tag and listing reference. The final block's hash matters even when it contains zero sample requests. |
-| Destination | QuickNode pushed one filtered JSON body per block over HTTPS to a temporary webhook. The receiver retained the three public chain records for replay and was shut down after delivery. Sample rows came directly from the authenticated seller API. |
+| Block range | 73,152,620 through 73,152,622, inclusive, one block per message |
+| JavaScript filter | Keep block numbers and hashes. Extract 0.01 test-USDC preview payments with the sample tag and listing reference. [Filter source](quicknode_filter.js) |
+| Destination | Temporary HTTPS webhook, closed after three deliveries. Each body includes the source Stream ID. |
 
-The [three destination bodies](examples/quicknode-stream) came from [QuickNode Stream dac710aa-e3be-409b-a7f5-e0255fbf3a26](https://dashboard.quicknode.com/streams/dac710aa-e3be-409b-a7f5-e0255fbf3a26). Replay the draw from the repository root using the public Arc Testnet RPC.
+Reproduce the Bitcoin draw from the captured deliveries and the public Arc Testnet RPC. This is read-only and costs no test USDC.
 
 ```sh
 SELLER=0xbdaf6907e159e633939e9db63adc35b2045db61f
 BUYER=0x565ff030eba37c58a595118f3cc6a3d341b6b414
-LISTING_TX=0xac99b6dd2748c309d34b7b4d77055ad0bc13ced6ec14ec6a336b66366d2e4159
-python3 quicknode_draw.py --seller "$SELLER" --buyer "$BUYER" --listing-tx "$LISTING_TX" examples/quicknode-stream/*.json
+LISTING_TX=0xd334d50ff26656d8891d5990cffe9c60e1591949d51c7cf72a0f1c070c1889b1
+python3 quicknode_draw.py --seller "$SELLER" --buyer "$BUYER" --listing-tx "$LISTING_TX" examples/quicknode-btc-stream/*.json
 ```
 
-The receipt includes the Stream ID and the ordered indices **28, 44, 56, 62, 25, 53, 10, 46**. To fetch the eight rows and check their proofs as well, start the Chicago seller API described below and run `python3 buyer_sample.py --seller "$SELLER" --buyer "$BUYER" --listing-tx "$LISTING_TX" --stream-delivery examples/quicknode-stream/*.json` with the buyer token set.
+The returned indices are **50, 53, 60, 47, 38, 55, 63, 49**. To reproduce the valuation, use the BTC seller API, benchmark and buyer token from the instructions above, set `OFFER_TX=0x4f344944b484f2b9ec4dce47c1dfe69e656210652c730f1335880d5278d7103c`, and run `btc_buyer.py decide` with `--stream-delivery examples/quicknode-btc-stream/*.json --reward-per-bp 0.20` in place of the request hash and reward in that example. A new run uses the current gas quote. Select **Best Use of QuickNode Streams** on Devpost to enter the sponsor bounty. [Hackathon guide](https://docs.google.com/document/d/1QaySCo7u3VxMVNdk3C5Ab3ewc2E46AuLntti-Uzx5EY/edit) · [Supported networks](https://www.quicknode.com/docs/streams/supported-chains)
 
-**Verified result.** Against the hosted deliveries, the buyer independently confirmed the historical payment, retrieved the private eight-row preview and verified all eight Merkle proofs. The [verified draw receipt](examples/quicknode-verified-draw.json) records the Stream ID, block hashes and selected indices. To enter the $500 sponsor bounty, opt in to **Best Use of QuickNode Streams** on Devpost. [Hackathon guide](https://docs.google.com/document/d/1QaySCo7u3VxMVNdk3C5Ab3ewc2E46AuLntti-Uzx5EY/edit) · [Supported Streams networks](https://www.quicknode.com/docs/streams/supported-chains) · [Webhook destination settings](https://www.quicknode.com/docs/streams/destinations/webhooks)
+## Earlier Chicago transport demo
 
-## Replay the paid preview
+The original Chicago run is also available for comparison. [Chicago Stream](https://dashboard.quicknode.com/streams/dac710aa-e3be-409b-a7f5-e0255fbf3a26) · [Three Chicago webhook deliveries](examples/quicknode-stream) · [Verified Chicago draw](examples/quicknode-verified-draw.json)
 
 On November 18 the seller anchored the Chicago snapshot in block 72,891,028. The buyer paid 0.01 test USDC in block 72,891,092, plus 0.000573 test USDC in gas. Block 72,891,094 selected eight row indices. The cloud buyer verified their proofs and recovered the same preview on retry. [Seller anchor](https://explorer.testnet.arc.io/tx/0xac99b6dd2748c309d34b7b4d77055ad0bc13ced6ec14ec6a336b66366d2e4159) · [Buyer payment](https://explorer.testnet.arc.io/tx/0x06d228d192e63d666687d30c62f0fcbf65265a020c57abe83980f9a067946153) · [Recorded public draw](examples/arc-testnet-draw.json)
 
