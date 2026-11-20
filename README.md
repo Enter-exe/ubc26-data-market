@@ -50,7 +50,7 @@ python3 btc_buyer.py assess --seller "$SELLER" --buyer "$BUYER" --listing-tx "$L
   --benchmark /tmp/btc-buyer.json
 ```
 
-The published Arc receipts below are for the Chicago preview. The BTC demo has been exercised with real market data and simulated payments. A BTC-specific paid testnet run remains pending.
+**Using QuickNode for the Bitcoin demo.** The seller supplies Coinbase BTC–USD rows. QuickNode Streams supplies the Arc payment and future block that select the eight rows. After paying for the BTC listing, configure the same [Stream filter](quicknode_filter.js) over its payment block through payment block + 2, inclusive. Save those delivery files in a BTC-specific directory. For either `decide` or `assess`, replace `--request-tx "$REQUEST_TX"` above with `--stream-delivery /path/to/btc-deliveries/*.json`. The buyer checks the BTC listing tag, verifies the draw and sample, then prices the remaining 56 market-data rows. The published Chicago receipts demonstrate the earlier transport run. The current Bitcoin dashboard still replays a simulated payment until a BTC-specific payment is captured.
 
 ## Run the synthetic freight demo
 

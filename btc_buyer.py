@@ -11,6 +11,7 @@ from arc_intent import purchase_wallet_request
 from arc_purchase import FULL_PRICE_BASE_UNITS, verify_offer, verify_purchase
 from btc_value import measured_outcome, price_preview
 from buyer_sample import fetch_preview, fetch_purchase
+from quicknode_draw import from_deliveries, load_deliveries
 from sample_delivery import btc_row_hour, check, check_full_rows, package
 
 
@@ -22,8 +23,11 @@ def usdc(text):
     return int(whole) * 10**18 + int(fraction.ljust(18, "0"))
 
 
-def paid_sample(rpc, url, token, seller, buyer, listing, request):
-    draw = verify_draw(rpc, seller, buyer, listing, request)
+def paid_sample(rpc, url, token, seller, buyer, listing, request, *, stream_files=None):
+    if stream_files is None:
+        draw = verify_draw(rpc, seller, buyer, listing, request)
+    else:
+        draw = from_deliveries(load_deliveries(stream_files), seller, buyer, listing, rpc)
     if draw.get("dataset") != "btc-usd-hourly":
         raise ValueError("This buyer requires a BTC-USD hourly listing")
     delivery = fetch_preview(url, token, draw)
@@ -35,8 +39,8 @@ def listing_start(draw, sample):
     return btc_row_hour(sample[0]) - draw["indices"][0] * 3600
 
 
-def arc_decision(rpc, url, token, seller, buyer, listing, request, offer, benchmark, budget, reward):
-    draw, sample = paid_sample(rpc, url, token, seller, buyer, listing, request)
+def arc_decision(rpc, url, token, seller, buyer, listing, request, offer, benchmark, budget, reward, *, stream_files=None):
+    draw, sample = paid_sample(rpc, url, token, seller, buyer, listing, request, stream_files=stream_files)
     terms = verify_offer(rpc, seller, listing, offer)
     if terms.get("dataset") != draw["dataset"] or terms["root"] != draw["root"]:
         raise ValueError("Full purchase offer differs from the sampled listing")
@@ -89,8 +93,12 @@ def main():
     assess = commands.add_parser("assess", help="Verify full payment and measure the delivered rows on holdout")
     assess.add_argument("--purchase-tx", required=True)
     for cmd in (decide, assess):
-        for key in ("seller", "buyer", "listing-tx", "request-tx", "offer-tx"):
+        for key in ("seller", "buyer", "listing-tx", "offer-tx"):
             cmd.add_argument("--" + key, required=True)
+        payment = cmd.add_mutually_exclusive_group(required=True)
+        payment.add_argument("--request-tx", help="BTC preview payment transaction")
+        payment.add_argument("--stream-delivery", nargs="+", metavar="JSON",
+                             help="Discover the BTC preview payment and draw from QuickNode Streams deliveries")
         cmd.add_argument("--rpc-url", default=RPC_URL)
         cmd.add_argument("--seller-api", default="http://127.0.0.1:8766")
     for cmd in (demo, decide, assess):
@@ -111,9 +119,10 @@ def main():
             rpc = rpc_client(args.rpc_url)
             context = (rpc, args.seller_api, token, args.seller, args.buyer, args.listing_tx, args.request_tx)
             if args.action == "decide":
-                result = arc_decision(*context, args.offer_tx, benchmark, args.remaining_budget, args.reward_per_bp)
+                result = arc_decision(*context, args.offer_tx, benchmark, args.remaining_budget, args.reward_per_bp,
+                                      stream_files=args.stream_delivery)
             else:
-                draw, sample = paid_sample(*context)
+                draw, sample = paid_sample(*context, stream_files=args.stream_delivery)
                 purchase = verify_purchase(rpc, args.seller, args.buyer, args.listing_tx, args.offer_tx, args.purchase_tx)
                 if purchase["root"] != draw["root"] or purchase.get("dataset") != draw["dataset"]:
                     raise ValueError("Full purchase differs from the sampled listing")

@@ -1,12 +1,18 @@
 """Check the agent's payment boundary with fictional Arc receipts."""
+import io
+import json
+import os
+import tempfile
 import unittest
+from contextlib import redirect_stdout
+from pathlib import Path
 from unittest.mock import patch
 
-from btc_buyer import arc_decision, usdc
+from btc_buyer import arc_decision, main, paid_sample, usdc
 import test_purchase
 from test_purchase import OFFER
 from test_protocol import BUYER, SELLER, LISTING, REQUEST, TOKEN, seller_endpoint
-from arc_draw import BTC_LISTING_TAG
+from arc_draw import BTC_LISTING_TAG, LISTING_TAG
 from market import tree
 
 
@@ -74,6 +80,39 @@ class BuyerDecisionTest(unittest.TestCase):
             full = fetch_purchase(url, TOKEN, purchase)
             preview = [rows[i] for i in decision["draw"]["indices"]]
             self.assertEqual(measured_outcome(preview, full["rows"], bench)["holdout_rows"], 64)
+
+            # Exercise both CLI entry points against the same private seller and fictional Arc receipts.
+            with tempfile.TemporaryDirectory() as tmp:
+                path = Path(tmp)
+                bench_file = path / "benchmark.json"
+                bench_file.write_text(json.dumps(bench))
+                draw = decision["draw"]
+                stream = {"network": "arc-testnet", "dataset": "block", "stream_id": "btc-fixture",
+                          "blocks": [{"number": hex(draw["request_block"]), "hash": draw["request_block_hash"],
+                                      "requests": [{"hash": REQUEST, "from": BUYER, "to": SELLER, "listing_tx": LISTING}]},
+                                     {"number": hex(draw["draw_block"]), "hash": draw["draw_block_hash"], "requests": []}]}
+                stream_file = path / "stream.json"
+                stream_file.write_text(json.dumps(stream))
+                common = ["--seller", SELLER, "--buyer", BUYER, "--listing-tx", LISTING, "--offer-tx", OFFER,
+                          "--seller-api", url, "--benchmark", str(bench_file), "--stream-delivery", str(stream_file)]
+                for command, flags in [("decide", ["--remaining-budget", "1", "--reward-per-bp", "1"]),
+                                       ("assess", ["--purchase-tx", PURCHASE])]:
+                    output = io.StringIO()
+                    with patch("sys.argv", ["btc_buyer.py", command, *common, *flags]), \
+                            patch.dict(os.environ, UBC26_BUYER_TOKEN=TOKEN), \
+                            patch("btc_buyer.rpc_client", return_value=self.rpc), redirect_stdout(output):
+                        main()
+                    receipt = json.loads(output.getvalue())
+                    self.assertEqual(receipt["draw"]["indices"], draw["indices"])
+                    self.assertEqual(receipt["draw"]["quicknode_streams"]["stream_id"], "btc-fixture")
+                    if command == "decide":
+                        self.assertEqual(receipt["wallet_request"], decision["wallet_request"])
+                    else:
+                        self.assertEqual(receipt["outcome"]["holdout_rows"], 64)
+                self.fixture.responses["eth_getTransactionByHash", (LISTING,)]["input"] = "0x" + LISTING_TAG.hex() + root
+                with patch("btc_buyer.fetch_preview") as fetch, self.assertRaisesRegex(ValueError, "BTC-USD hourly"):
+                    paid_sample(self.rpc, url, TOKEN, SELLER, BUYER, LISTING, None, stream_files=[stream_file])
+                fetch.assert_not_called()
 
     def test_rejects_fractional_base_units(self):
         with self.assertRaises(ValueError):
