@@ -5,6 +5,30 @@ globalThis.Showdown = (() => {
   const hexHash = /^[0-9a-f]{64}$/;
   const digest = async bytes => new Uint8Array(await crypto.subtle.digest("SHA-256", bytes));
 
+  // Mirror btc_buyer.rehearse and arc_draw.draw_indices using the offline block fixture.
+  async function replayDraw(root, seed) {
+    if (typeof root !== "string" || !hexHash.test(root) || !Number.isSafeInteger(seed)) {
+      throw Error("Invalid BTC replay draw inputs.");
+    }
+    const domain = encoder.encode("UBC26:draw:v1:");
+    const request = await digest(encoder.encode("offline BTC preview " + seed));
+    const block = await digest(encoder.encode("offline BTC draw block"));
+    const input = new Uint8Array(domain.length + 3 * 32 + 4);
+    input.set(domain);
+    input.set(Uint8Array.from(root.match(/../g), byte => parseInt(byte, 16)), domain.length);
+    input.set(request, domain.length + 32);
+    input.set(block, domain.length + 64);
+    const view = new DataView(input.buffer);
+    const indices = [];
+    for (let counter = 0; indices.length < 8; counter++) {
+      view.setUint32(input.length - 4, counter, false);
+      const bytes = await digest(input);
+      const index = bytes[31] % 64;
+      if (!indices.includes(index)) indices.push(index);
+    }
+    return indices;
+  }
+
   async function matchesRoot({index, row, proof}, root) {
     if (!Array.isArray(row) || row.length !== 3 || !/^BTC-USD:1h:[0-9]{10}$/.test(row[0]) ||
         !row.slice(1).every(value => Number.isSafeInteger(value) && value > 0) ||
@@ -27,12 +51,11 @@ globalThis.Showdown = (() => {
   async function evaluate(data, altered) {
     if (!globalThis.crypto?.subtle) throw Error("Proof checking requires a local file, localhost, or HTTPS.");
     const run = data.runs["0.20"];
-    const draw = run.indices;
-    if (!Array.isArray(draw) || draw.length !== 8 || new Set(draw).size !== 8 ||
-        !draw.every(i => Number.isInteger(i) && i >= 0 && i < 64) ||
+    const draw = await replayDraw(run.root, run.seed);
+    if (!Array.isArray(run.indices) || run.indices.length !== draw.length ||
         !Array.isArray(data.samples) || data.samples.length !== draw.length ||
-        !data.samples.every((sample, i) => sample?.index === draw[i])) {
-      throw Error("Delivered sample differs from the recorded eight-row draw.");
+        !draw.every((index, i) => run.indices[i] === index && data.samples[i]?.index === index)) {
+      throw Error("Recorded selection or delivery differs from the independently reproduced draw.");
     }
     const samples = structuredClone(data.samples).sort((a, b) => a.index - b.index);
     const first = samples[0];

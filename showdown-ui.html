@@ -80,10 +80,10 @@ function drawTree(samples){
 function inspect(){
   const available=phase>=3 && result;
   byId("raw").hidden=byId("row-label").hidden=!available;
-  setText("inspect-note",available?"The encoded row and six sibling hashes are the inputs to browser verification.":"Advance to sample delivery to inspect the rows and their proofs.");
+  setText("inspect-note",available?"The browser reproduced all eight indices from the simulated draw. Each row has six sibling hashes for checking membership.":"Advance to sample delivery to inspect the rows and their proofs.");
   if(!available)return;
   const sample=result.samples.find(s=>s.index===Number(byId("proof-row").value))||result.samples[0];
-  setText("raw",JSON.stringify({index:sample.index,row:sample.row,proof:sample.proof,listing_root:listing.root},null,2));
+  setText("raw",JSON.stringify({index:sample.index,row:sample.row,proof:sample.proof,listing_root:listing.root,simulated_seed:listing.seed,draw_order:listing.indices},null,2));
 }
 function render(){
   const samples=(phase>=3 && result)?result.samples:excerpt;
@@ -109,7 +109,9 @@ function render(){
   drawTree(samples);
   const handoff=byId("handoff");
   handoff.replaceChildren();
-  if(phase===3){
+  if(error){
+    handoff.textContent="Delivery stopped before acceptance";
+  }else if(phase===3){
     const line=element("span","");line.className="wire";line.setAttribute("aria-hidden","true");
     for(let n=0;n<8;n++){const packet=element("i","");packet.style.setProperty("--packet",n);packet.style.left=(12*n)+"%";line.append(packet)}
     handoff.append(element("span","Seller API"),line,element("span","→ Buyer inbox"));
@@ -121,12 +123,14 @@ function render(){
     const row=element("li",""),done=phase>i,invalid=failed && i===3;
     if(i===3 && checked)label=failed?"Proof mismatch · row #"+result.samples[result.verified.indexOf(false)].index:"All eight proofs match";
     if(i===4 && decided)label=currentVerdict;
-    row.className=(invalid?"fail":done?"done":"")+(phase===i+1?" current":"");
-    const code=element("span",invalid?"×":done?"✓":String(i+1));code.className="step-code";row.append(code,element("span",label));ledger.append(row);
+    const stopped=Boolean(error) && phase===i+1;
+    if(stopped)label="Delivery check stopped";
+    row.className=(invalid || stopped?"fail":done?"done":"")+(phase===i+1?" current":"");
+    const code=element("span",invalid || stopped?"×":done?"✓":String(i+1));code.className="step-code";row.append(code,element("span",label));ledger.append(row);
   });
   let headline=["Standing by.","Root received.","Draw received.","Sample received.",failed?"Mismatch found.":"Proofs match.",currentVerdict+"."][phase];
   const v=result?.run?.valuation;
-  const messages=["Run the discovery to follow both deliveries.","The seller has fixed the contents of its 64-row listing.","The recorded draw picks eight indices before the API returns any rows.","Eight hourly records and their proofs have arrived from the seller API.",failed?"One delivered range fails the original commitment. Valuation is blocked.":"Each sampled row belongs to the committed listing.",failed?"One changed range breaks its proof. The buyer stops before pricing the other 56 rows.":v?.decision==="buy"?"The estimated value of the remaining 56 hours covers the full price and gas.":"The purchase does not meet the buyer’s value and budget limits."];
+  const messages=["Run the discovery to follow both deliveries.","The seller has fixed the contents of its 64-row listing.","The recorded draw picks eight indices before the API returns any rows.","The buyer reproduced the draw and received all eight selected rows with proofs.",failed?"One delivered range fails the original commitment. Valuation is blocked.":"Each sampled row belongs to the committed listing.",failed?"One changed range breaks its proof. The buyer stops before pricing the other 56 rows.":v?.decision==="buy"?"The estimated value of the remaining 56 hours covers the full price and gas.":"The purchase does not meet the buyer’s value and budget limits."];
   setText("mobile-status","Buyer agent · "+(error?"Replay unavailable":headline)+" ↓");
   setText("decision",error?"Replay unavailable.":headline);setText("reason",error||messages[phase]);
   byId("agent").dataset.tone=failed || error?"bad":phase>=4?"good":"";
@@ -154,7 +158,7 @@ async function enter(id,step){
       for(const s of result.samples){const opt=element("option","#"+s.index);opt.value=s.index;byId("proof-row").append(opt)}
     }catch(e){
       if(request!==revision)return;
-      error="The browser could not verify the replay. Open the downloaded file locally or use HTTPS.";playing=false;
+      error=e.message || "The browser could not verify the replay.";playing=false;
     }
   }
   if(step===5 && id===0 && result)firstVerdict=(result.run?.valuation?.decision==="buy"?"Buy decision":result.run?"Pass decision":"Purchase skipped")+" · "+result.verified.filter(Boolean).length+"/8 verified";

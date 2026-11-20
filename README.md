@@ -4,7 +4,7 @@ A seller commits to 64 hourly BTC–USD training examples. An agent pays for eig
 
 ## Show the judges
 
-Open [the BTC showdown](showdown.html) locally, or run `python3 desk.py` and visit [the BTC dashboard](http://127.0.0.1:8765/btc). **Run showdown** follows the same sample through two deliveries. The first verifies all eight rows and shows the buyer's recorded decision. In the second, one hourly BTC range changes after commitment. The browser recomputes the proofs, identifies the changed row and stops the full purchase before valuation. The replay uses historical Coinbase data, a fixed draw and simulated BTC payments. The 0.01 test-USDC preview fee is separate from the full purchase.
+Open [the BTC showdown](showdown.html) locally, or run `python3 desk.py` and visit [the BTC dashboard](http://127.0.0.1:8765/btc). **Run showdown** follows the same sample through two deliveries. The browser reproduces the eight indices from the listing root and simulated seed, then checks the delivery order. The first case verifies all eight rows and shows the buyer's recorded decision. In the second, one hourly BTC range changes after commitment. The browser recomputes the proofs, identifies the changed row and stops the full purchase before valuation. The replay uses historical Coinbase data, a fixed draw and simulated BTC payments. The 0.01 test-USDC preview fee is separate from the full purchase.
 
 ## Explore the original demo
 

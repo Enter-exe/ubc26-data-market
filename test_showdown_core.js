@@ -33,7 +33,7 @@ test("a damaged proof or different commitment also blocks the intact scenario", 
   assert.equal(result.run, null);
   assert.equal(result.verified.filter(Boolean).length, 7);
   modified.runs["0.20"].root = "1".repeat(64);
-  assert.deepEqual((await Showdown.evaluate(modified, false)).verified, Array(8).fill(false));
+  await assert.rejects(Showdown.evaluate(modified, false), /draw/i);
 });
 
 test("a missing, duplicated or substituted draw position stops the replay", async () => {
@@ -41,6 +41,20 @@ test("a missing, duplicated or substituted draw position stops the replay", asyn
     data => data.samples.pop(),
     data => { data.samples[0] = data.samples[1]; },
     data => { data.runs["0.20"].indices[0] = 0; },
+  ]) {
+    const data = structuredClone(replay);
+    edit(data);
+    await assert.rejects(Showdown.evaluate(data, false), /draw/i);
+  }
+});
+
+test("the simulated seed and draw order must reproduce the Python buyer's selection", async () => {
+  for (const edit of [
+    data => { data.runs["0.20"].seed += 1; },
+    data => {
+      data.runs["0.20"].indices.reverse();
+      data.samples.reverse();
+    },
   ]) {
     const data = structuredClone(replay);
     edit(data);

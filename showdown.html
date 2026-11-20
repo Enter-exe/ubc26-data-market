@@ -51,6 +51,30 @@ globalThis.Showdown = (() => {
   const hexHash = /^[0-9a-f]{64}$/;
   const digest = async bytes => new Uint8Array(await crypto.subtle.digest("SHA-256", bytes));
 
+  // Mirror btc_buyer.rehearse and arc_draw.draw_indices using the offline block fixture.
+  async function replayDraw(root, seed) {
+    if (typeof root !== "string" || !hexHash.test(root) || !Number.isSafeInteger(seed)) {
+      throw Error("Invalid BTC replay draw inputs.");
+    }
+    const domain = encoder.encode("UBC26:draw:v1:");
+    const request = await digest(encoder.encode("offline BTC preview " + seed));
+    const block = await digest(encoder.encode("offline BTC draw block"));
+    const input = new Uint8Array(domain.length + 3 * 32 + 4);
+    input.set(domain);
+    input.set(Uint8Array.from(root.match(/../g), byte => parseInt(byte, 16)), domain.length);
+    input.set(request, domain.length + 32);
+    input.set(block, domain.length + 64);
+    const view = new DataView(input.buffer);
+    const indices = [];
+    for (let counter = 0; indices.length < 8; counter++) {
+      view.setUint32(input.length - 4, counter, false);
+      const bytes = await digest(input);
+      const index = bytes[31] % 64;
+      if (!indices.includes(index)) indices.push(index);
+    }
+    return indices;
+  }
+
   async function matchesRoot({index, row, proof}, root) {
     if (!Array.isArray(row) || row.length !== 3 || !/^BTC-USD:1h:[0-9]{10}$/.test(row[0]) ||
         !row.slice(1).every(value => Number.isSafeInteger(value) && value > 0) ||
@@ -73,12 +97,11 @@ globalThis.Showdown = (() => {
   async function evaluate(data, altered) {
     if (!globalThis.crypto?.subtle) throw Error("Proof checking requires a local file, localhost, or HTTPS.");
     const run = data.runs["0.20"];
-    const draw = run.indices;
-    if (!Array.isArray(draw) || draw.length !== 8 || new Set(draw).size !== 8 ||
-        !draw.every(i => Number.isInteger(i) && i >= 0 && i < 64) ||
+    const draw = await replayDraw(run.root, run.seed);
+    if (!Array.isArray(run.indices) || run.indices.length !== draw.length ||
         !Array.isArray(data.samples) || data.samples.length !== draw.length ||
-        !data.samples.every((sample, i) => sample?.index === draw[i])) {
-      throw Error("Delivered sample differs from the recorded eight-row draw.");
+        !draw.every((index, i) => run.indices[i] === index && data.samples[i]?.index === index)) {
+      throw Error("Recorded selection or delivery differs from the independently reproduced draw.");
     }
     const samples = structuredClone(data.samples).sort((a, b) => a.index - b.index);
     const first = samples[0];
@@ -129,10 +152,10 @@ function drawTree(samples){
 function inspect(){
   const available=phase>=3 && result;
   byId("raw").hidden=byId("row-label").hidden=!available;
-  setText("inspect-note",available?"The encoded row and six sibling hashes are the inputs to browser verification.":"Advance to sample delivery to inspect the rows and their proofs.");
+  setText("inspect-note",available?"The browser reproduced all eight indices from the simulated draw. Each row has six sibling hashes for checking membership.":"Advance to sample delivery to inspect the rows and their proofs.");
   if(!available)return;
   const sample=result.samples.find(s=>s.index===Number(byId("proof-row").value))||result.samples[0];
-  setText("raw",JSON.stringify({index:sample.index,row:sample.row,proof:sample.proof,listing_root:listing.root},null,2));
+  setText("raw",JSON.stringify({index:sample.index,row:sample.row,proof:sample.proof,listing_root:listing.root,simulated_seed:listing.seed,draw_order:listing.indices},null,2));
 }
 function render(){
   const samples=(phase>=3 && result)?result.samples:excerpt;
@@ -158,7 +181,9 @@ function render(){
   drawTree(samples);
   const handoff=byId("handoff");
   handoff.replaceChildren();
-  if(phase===3){
+  if(error){
+    handoff.textContent="Delivery stopped before acceptance";
+  }else if(phase===3){
     const line=element("span","");line.className="wire";line.setAttribute("aria-hidden","true");
     for(let n=0;n<8;n++){const packet=element("i","");packet.style.setProperty("--packet",n);packet.style.left=(12*n)+"%";line.append(packet)}
     handoff.append(element("span","Seller API"),line,element("span","→ Buyer inbox"));
@@ -170,12 +195,14 @@ function render(){
     const row=element("li",""),done=phase>i,invalid=failed && i===3;
     if(i===3 && checked)label=failed?"Proof mismatch · row #"+result.samples[result.verified.indexOf(false)].index:"All eight proofs match";
     if(i===4 && decided)label=currentVerdict;
-    row.className=(invalid?"fail":done?"done":"")+(phase===i+1?" current":"");
-    const code=element("span",invalid?"×":done?"✓":String(i+1));code.className="step-code";row.append(code,element("span",label));ledger.append(row);
+    const stopped=Boolean(error) && phase===i+1;
+    if(stopped)label="Delivery check stopped";
+    row.className=(invalid || stopped?"fail":done?"done":"")+(phase===i+1?" current":"");
+    const code=element("span",invalid || stopped?"×":done?"✓":String(i+1));code.className="step-code";row.append(code,element("span",label));ledger.append(row);
   });
   let headline=["Standing by.","Root received.","Draw received.","Sample received.",failed?"Mismatch found.":"Proofs match.",currentVerdict+"."][phase];
   const v=result?.run?.valuation;
-  const messages=["Run the discovery to follow both deliveries.","The seller has fixed the contents of its 64-row listing.","The recorded draw picks eight indices before the API returns any rows.","Eight hourly records and their proofs have arrived from the seller API.",failed?"One delivered range fails the original commitment. Valuation is blocked.":"Each sampled row belongs to the committed listing.",failed?"One changed range breaks its proof. The buyer stops before pricing the other 56 rows.":v?.decision==="buy"?"The estimated value of the remaining 56 hours covers the full price and gas.":"The purchase does not meet the buyer’s value and budget limits."];
+  const messages=["Run the discovery to follow both deliveries.","The seller has fixed the contents of its 64-row listing.","The recorded draw picks eight indices before the API returns any rows.","The buyer reproduced the draw and received all eight selected rows with proofs.",failed?"One delivered range fails the original commitment. Valuation is blocked.":"Each sampled row belongs to the committed listing.",failed?"One changed range breaks its proof. The buyer stops before pricing the other 56 rows.":v?.decision==="buy"?"The estimated value of the remaining 56 hours covers the full price and gas.":"The purchase does not meet the buyer’s value and budget limits."];
   setText("mobile-status","Buyer agent · "+(error?"Replay unavailable":headline)+" ↓");
   setText("decision",error?"Replay unavailable.":headline);setText("reason",error||messages[phase]);
   byId("agent").dataset.tone=failed || error?"bad":phase>=4?"good":"";
@@ -203,7 +230,7 @@ async function enter(id,step){
       for(const s of result.samples){const opt=element("option","#"+s.index);opt.value=s.index;byId("proof-row").append(opt)}
     }catch(e){
       if(request!==revision)return;
-      error="The browser could not verify the replay. Open the downloaded file locally or use HTTPS.";playing=false;
+      error=e.message || "The browser could not verify the replay.";playing=false;
     }
   }
   if(step===5 && id===0 && result)firstVerdict=(result.run?.valuation?.decision==="buy"?"Buy decision":result.run?"Pass decision":"Purchase skipped")+" · "+result.verified.filter(Boolean).length+"/8 verified";
