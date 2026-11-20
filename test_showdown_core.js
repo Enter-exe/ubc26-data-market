@@ -26,6 +26,28 @@ test("changing one delivered range invalidates precisely that row and withholds 
   assert.equal(JSON.stringify(replay), before);
 });
 
+test("editing a chosen row verifies its displayed range against the original proof", async () => {
+  const row = replay.samples.toSorted((a, b) => a.index - b.index).at(-1);
+  const rangeBps = row.row[2] - 1;
+  const edited = await Showdown.evaluate(replay, {index: row.index, rangeBps: rangeBps + 1});
+  assert.equal(edited.changedIndex, row.index);
+  assert.equal(edited.originalValue, rangeBps + 1);
+  assert.equal(edited.samples.at(-1).row[2], rangeBps + 2);
+  assert.deepEqual(edited.verified, [true, true, true, true, true, true, true, false]);
+  assert.equal(edited.run, null);
+  const restored = await Showdown.evaluate(replay, {index: row.index, rangeBps});
+  assert.equal(restored.changedIndex, null);
+  assert.equal(restored.run.valuation.decision, "buy");
+});
+
+test("edits require a delivered index and an encodable whole number of basis points", async () => {
+  const index = replay.samples[0].index;
+  for (const edit of [{index: -1, rangeBps: 0}, {index, rangeBps: -1}, {index, rangeBps: 3.5},
+    {index, rangeBps: Number.MAX_SAFE_INTEGER}, {index, rangeBps: "1"}]) {
+    await assert.rejects(Showdown.evaluate(replay, edit), /delivered row|basis points/i);
+  }
+});
+
 test("a damaged proof or different commitment also blocks the intact scenario", async () => {
   const modified = structuredClone(replay);
   modified.samples[0].proof[1] = "0".repeat(64);

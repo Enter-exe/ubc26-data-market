@@ -8,7 +8,7 @@ from contextlib import redirect_stdout
 from pathlib import Path
 from unittest.mock import patch
 
-from btc_buyer import arc_decision, main, paid_sample, usdc
+from btc_buyer import USDC_CONTRACT, arc_decision, main, paid_sample, usdc
 import test_purchase
 from test_purchase import OFFER
 from test_protocol import BUYER, SELLER, LISTING, REQUEST, TOKEN, seller_endpoint
@@ -28,6 +28,11 @@ class BuyerDecisionTest(unittest.TestCase):
         self.wallet_reads = []
 
     def rpc(self, method, params):
+        if method == "eth_call":
+            self.wallet_reads.append(method)
+            self.assertEqual(params, [{"to": USDC_CONTRACT,
+                                       "data": "0x70a08231" + BUYER[2:].zfill(64)}, "pending"])
+            return "0x" + (10**6).to_bytes(32, "big").hex()
         if method in ("eth_gasPrice", "eth_estimateGas", "eth_getBalance"):
             self.wallet_reads.append(method)
             return hex({"eth_gasPrice": 100, "eth_estimateGas": 28000, "eth_getBalance": 10**18}[method])
@@ -47,9 +52,59 @@ class BuyerDecisionTest(unittest.TestCase):
 
     def test_only_buy_emits_a_gas_bounded_purchase_request(self):
         self.assertNotIn("wallet_request", self.run_decision("pass"))
-        tx = self.run_decision("buy")["wallet_request"]["params"][0]
+        decision = self.run_decision("buy")
+        self.assertEqual(decision["usdc_contract"],
+                         {"address": USDC_CONTRACT, "balance_micro_usdc": "1000000"})
+        tx = decision["wallet_request"]["params"][0]
         self.assertEqual((tx["from"], tx["to"], int(tx["value"], 16)), (BUYER, SELLER, 10**17))
         self.assertEqual((int(tx["gas"], 16), int(tx["gasPrice"], 16)), (28000, 100))
+
+    def test_contract_balance_blocks_an_unaffordable_offer(self):
+        from sample_delivery import package
+        snapshot = {"rows": self.rows, "manifest": {"root": self.fixture.root}}
+
+        def low_balance_rpc(method, params):
+            if method == "eth_call":
+                return "0x" + (99999).to_bytes(32, "big").hex()
+            return self.rpc(method, params)
+
+        with patch("btc_buyer.fetch_preview", side_effect=lambda url, token, draw: package(snapshot, draw)), \
+                patch("btc_buyer.price_preview") as price:
+            result = arc_decision(low_balance_rpc, "http://127.0.0.1", "buyer-secret", SELLER, BUYER,
+                                  LISTING, REQUEST, OFFER, {}, usdc("0.5"), usdc("0.1"))
+        self.assertEqual(result["valuation"]["decision"], "pass")
+        self.assertNotIn("wallet_request", result)
+        price.assert_not_called()
+
+    def test_native_balance_preserves_gas_precision_beyond_six_decimals(self):
+        from sample_delivery import package
+        snapshot = {"rows": self.rows, "manifest": {"root": self.fixture.root}}
+        native_balance = 10**17 + 10**11
+
+        def precise_balance_rpc(method, params):
+            if method == "eth_call":
+                return "0x" + (100000).to_bytes(32, "big").hex()
+            if method == "eth_getBalance":
+                return hex(native_balance)
+            return self.rpc(method, params)
+
+        with patch("btc_buyer.fetch_preview", side_effect=lambda url, token, draw: package(snapshot, draw)), \
+                patch("btc_buyer.price_preview", return_value={"decision": "pass"}) as price:
+            arc_decision(precise_balance_rpc, "http://127.0.0.1", "buyer-secret", SELLER, BUYER,
+                         LISTING, REQUEST, OFFER, {}, usdc("0.5"), usdc("0.1"))
+        self.assertEqual(price.call_args.args[4], native_balance)
+
+    def test_malformed_contract_result_stops_the_decision(self):
+        from sample_delivery import package
+        snapshot = {"rows": self.rows, "manifest": {"root": self.fixture.root}}
+
+        def bad_contract_rpc(method, params):
+            return "0x" if method == "eth_call" else self.rpc(method, params)
+
+        with patch("btc_buyer.fetch_preview", side_effect=lambda url, token, draw: package(snapshot, draw)):
+            with self.assertRaisesRegex(ValueError, "USDC balanceOf result"):
+                arc_decision(bad_contract_rpc, "http://127.0.0.1", "buyer-secret", SELLER, BUYER,
+                             LISTING, REQUEST, OFFER, {}, usdc("0.5"), usdc("0.1"))
 
     def test_private_sample_to_decision_and_purchased_holdout(self):
         from arc_draw import verify_draw

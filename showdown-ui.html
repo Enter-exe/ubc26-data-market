@@ -2,47 +2,233 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#f5f4ee"><title>Proofdesk · Sample showdown</title>
+<meta name="theme-color" content="#f5f4ee"><title>Proofdesk · Verify a data preview</title>
 <style>
-:root{color-scheme:light;--paper:#f5f4ee;--panel:#fffef8;--ink:#192921;--muted:#526158;--rule:#cbd1c5;--green:#176443;--mint:#bbf3b6;--rust:#9f3e27;--mono:ui-monospace,SFMono-Regular,Consolas,monospace;font-family:"Helvetica Neue",Arial,sans-serif;color:var(--ink);background:var(--paper)}
-*{box-sizing:border-box}body{margin:0}button,select{font:inherit}button,summary,a,select{touch-action:manipulation}button,summary,select{cursor:pointer}a{color:inherit;text-underline-offset:4px}button{color:inherit}button:focus-visible,summary:focus-visible,a:focus-visible,select:focus-visible{outline:3px solid #da852a;outline-offset:4px}[hidden]{display:none!important}
-.wrap{width:min(1440px,94%);margin:auto}.mast{border-bottom:1px solid var(--rule)}.mast .wrap,.brand,.nav,.actions,.casebar,.tabs,.meta,.ledger-head,.key,.section-title{display:flex;align-items:center}.mast .wrap{justify-content:space-between;min-height:64px}.brand{gap:9px;font-size:21px;font-weight:700;letter-spacing:-.04em}.brand svg{width:26px;height:26px}.nav{gap:23px;font-size:13px}.nav a{font-weight:600}.mode{font-family:var(--mono);font-size:11px;color:var(--muted)}
-.hero{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;padding:37px 0 27px}.hero h1,.panel h2,.decision,.case-title{font-family:Georgia,"Times New Roman",serif;font-weight:400}.hero h1{font-size:clamp(44px,5.1vw,76px);line-height:1;margin:0;letter-spacing:-.045em}.hero p{margin:12px 0 0;font-size:16px;color:var(--muted);line-height:1.45}.actions{gap:8px;flex-shrink:0}.actions button,.restart{border:1px solid var(--rule);border-radius:5px;background:transparent;padding:11px 14px;font-size:14px;font-weight:650;min-height:42px}.actions .primary{background:var(--ink);color:white;border-color:var(--ink);min-width:142px}.actions button:hover,.restart:hover{border-color:var(--ink)}.actions .primary:hover{background:#294938}button:disabled{opacity:.42;cursor:default}.play-icon{font-size:11px;margin-right:7px}.casebar{justify-content:space-between;gap:12px;border-top:1px solid var(--rule);padding:12px 0}.tabs{gap:6px}.tabs button{border:1px solid transparent;background:transparent;padding:8px 13px;font-size:13px;border-radius:4px;color:var(--muted)}.tabs button[aria-pressed=true]{border-color:#a8b6a7;background:#e3e9dd;color:var(--ink);font-weight:650}.tabs button:hover{color:var(--ink)}.tabs b{font:11px var(--mono);margin-right:6px}.counter,.small-label,.step-code,.metric-val,.field,.root,.key,.receipt,.axis,.case-key{font-family:var(--mono)}.counter,.small-label,.axis,.case-key{font-size:11px;letter-spacing:.075em;text-transform:uppercase}.counter{color:var(--muted);white-space:nowrap}
-.board{display:grid;grid-template-columns:1fr 1.1fr 1fr;border:1px solid #bbc4b8;border-radius:9px;overflow:hidden;background:var(--panel)}.panel{padding:22px clamp(15px,1.65vw,28px) 20px;min-width:0}.panel+.panel{border-left:1px solid var(--rule)}.section-title{gap:9px}.icon{display:grid;place-items:center;border:1px solid var(--rule);width:28px;height:28px;border-radius:6px}.icon svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linejoin:round;stroke-linecap:round}.section-title h2{font-size:26px;letter-spacing:-.035em;margin:0}.small-label,.axis,.case-key{color:var(--muted)}.dataset{font-weight:650;font-size:20px;margin:23px 0 4px;letter-spacing:-.025em}.dataset-meta,.hint,.caption{color:var(--muted);font-size:13px;line-height:1.45}.hint,.caption{margin:6px 0}.sample-map{margin:15px 0 0}.sample-map figcaption{font-size:13px;font-weight:650}.sample-map figcaption span{font-weight:400;color:var(--muted)}.rowmap{display:grid;grid-template-columns:repeat(16,minmax(0,1fr));gap:4px;margin:8px 0}.rowmap i{height:8px;border-radius:1px}.sample-map{--cell:#d6ddcf}.sample-map .selected,.sample-map .delivered{--cell:#9a744c}.sample-map .verified{--cell:var(--green)}.sample-map .mismatch{--cell:var(--rust)}.rowmap i,.key span:before{background:var(--cell)}.key{flex-wrap:wrap;gap:4px 11px;font-size:11px;color:var(--muted)}.key span:before{content:"";display:inline-block;width:7px;height:7px;margin-right:5px}.preview{width:100%;border-collapse:collapse;font-size:12px;margin-top:17px;font-variant-numeric:tabular-nums}.preview th{font-weight:500;text-align:left;font-size:11px;color:var(--muted)}.preview td,.preview th{padding:6px 2px;border-bottom:1px solid #dce1d6}.preview td:last-child,.preview th:last-child{text-align:right}.field{font-size:12px}.altered{color:var(--rust);font-weight:750}del{color:var(--muted);font-weight:400}.rootbox{margin-top:16px}.root{display:block;font-size:12px;margin-top:5px}.trust{background:#f0f3e9}.ledger-head{margin-top:15px;justify-content:space-between}.tree{display:block;width:100%;height:116px;overflow:visible}.branch{fill:none;stroke:#c9d1c4;stroke-width:1}.branch.ok{stroke:#24815b;stroke-width:1.65}.branch.broken{stroke:var(--rust);stroke-width:2.25;stroke-dasharray:3 2}.node{fill:#b8c4b4}.node.ok{fill:var(--green)}.node.broken{fill:var(--rust)}.branch.selected{stroke:#987047;stroke-width:1.5}.node.selected{fill:#89623f}
-.handoff{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:22px;font:11px var(--mono);color:var(--muted)}.wire{position:relative;width:24%;height:1px;flex:1;background:#afbeb1;overflow:visible}.wire i{position:absolute;top:-2px;width:5px;height:5px;border-radius:1px;background:var(--green)}.mobile-status{display:none}.agent[data-tone=bad] .em{color:#ffb29a}
-.ledger{margin:4px 0 0;padding:0;list-style:none}.ledger li{display:grid;grid-template-columns:20px 1fr;gap:8px;align-items:center;padding:7px 0;border-top:1px solid #d4dbcd;font-size:13px;color:var(--muted)}.step-code{border:1px solid #a7b3a4;width:17px;height:17px;border-radius:50%;display:grid;place-items:center;font-size:10px}.ledger li.done{color:var(--ink)}.done .step-code{background:#d4ead5;border-color:#89b79c;color:#155737}.ledger li.fail{color:var(--rust);font-weight:700}.fail .step-code{border-color:var(--rust);background:#f5d9cf}.ledger li.current{font-weight:650}
-.agent{background:#1a3028;color:#f1f6ec}.agent .icon{border-color:#597267}.agent .small-label,.agent .hint{color:#b7c9bd}.decision-box{padding:24px 0 16px;border-bottom:1px solid #455a4e}.decision{font-size:clamp(34px,3.2vw,50px);line-height:1.04;letter-spacing:-.04em;margin:6px 0 8px}.agent[data-tone=good] .decision{color:#bbf3b6}.agent[data-tone=bad] .decision{color:#ffb29a}.decision-box .hint{min-height:2.8em}.metrics{margin:10px 0}.metric{display:flex;justify-content:space-between;gap:10px;align-items:baseline;padding:6px 0;font-size:13px;color:#d3e0d6}.metric-val{font-size:14px;color:#f1f6ec}.metric-val.em{color:var(--mint)}.receipt{font-size:11px;line-height:1.55;color:#c9d8cd;margin:13px 0 0;padding-left:10px;border-left:2px solid #91b99b}.agent[data-tone=bad] .receipt{border-color:#e99f89}
-.inspector{margin:14px 0 0;border-bottom:1px solid var(--rule)}.inspector summary{padding:10px 0 14px;font-size:14px;font-weight:600}.inspect-inner{padding:0 0 17px;display:grid;gap:12px}.inspect-inner p{margin:0}.inspect-inner select{padding:6px;border:1px solid var(--rule);background:var(--panel);border-radius:3px}.inspect-inner pre{margin:0;background:#e9ebe3;padding:12px;border-radius:4px;overflow:auto;font-size:12px;line-height:1.5}.foot{display:flex;align-items:baseline;justify-content:space-between;gap:20px;margin:14px 0 22px;color:var(--muted);font-size:12px;line-height:1.45}.foot p{margin:0;max-width:75ch}.restart{font-size:12px;padding:6px 10px;min-height:32px}.compare{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--rule);border-radius:7px;margin-top:12px;overflow:hidden}.compare>div{padding:12px 16px;background:#e7f0e1}.compare>div+div{border-left:1px solid var(--rule);background:#f6e7df}.case-title{font-size:21px;margin:3px 0 0}
-@media(min-width:1600px){.hero{padding:50px 0 35px}.panel{padding:27px}.tree{height:140px}.ledger li{padding:9px 0}}
-@media(max-width:900px){.wrap{width:95%}.panel{padding:17px 12px}.section-title h2{font-size:22px}.actions button{padding:10px}.nav{gap:12px}.hero p{font-size:14px}.decision{font-size:34px}}
-@media(max-width:720px){.wrap{width:calc(100% - 32px)}.mast .wrap{min-height:52px}.mode{display:none}.hero{display:block;padding:24px 0 15px}.hero h1{font-size:43px}.actions{margin-top:14px}.casebar{align-items:flex-start;flex-wrap:wrap;padding:9px 0}.tabs{gap:2px}.tabs button{padding:7px}.counter{align-self:center;font-size:10px}.board{grid-template-columns:1fr}.panel{padding:18px}.panel+.panel{border-left:0;border-top:1px solid var(--rule)}.dataset{margin-top:14px}.decision-box{padding-top:15px}.tree{height:110px}.foot{align-items:flex-start}.compare{grid-template-columns:1fr}.compare>div+div{border-left:0;border-top:1px solid var(--rule)}}
-@media(max-width:720px){.mobile-status{display:block;padding:7px 0 12px;font-size:13px;color:var(--green);font-weight:650}}
-@media(prefers-reduced-motion:no-preference){.wire i{animation:send 1.35s ease-in-out both;animation-delay:calc(var(--packet)*.16s)}@keyframes send{from{left:0;opacity:0}15%{opacity:1}85%{opacity:1}to{left:100%;opacity:0}}.branch.ok,.branch.broken{animation:trace .62s ease-out}.current .step-code{animation:check .28s ease-out}@keyframes trace{from{opacity:.2}to{opacity:1}}@keyframes check{from{transform:scale(.72)}to{transform:scale(1)}}}
-</style></head>
-<body><header class="mast"><div class="wrap"><div class="brand"><svg aria-hidden="true" viewBox="0 0 28 28"><rect width="28" height="28" rx="6" fill="#213e30"/><path d="M5 19L13 7h4L9 19zm7 2 8-12 3 3-6 9z" fill="#bef0b5"/></svg>Proofdesk</div><nav class="nav" aria-label="Demo navigation"><span class="mode" id="mode">BTC simulation</span><a href="demo.html">Original demo ↗</a></nav></div></header>
+:root {
+  color-scheme: light;
+  --paper: #f5f4ee;
+  --panel: #fffef8;
+  --ink: #192921;
+  --muted: #536257;
+  --rule: #c8cec1;
+  --green: #166747;
+  --spruce: #19352a;
+  --mint: #c3f3b7;
+  --rust: #a03b24;
+  --serif: Georgia, "Times New Roman", serif;
+  --mono: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-family: "Helvetica Neue", Arial, sans-serif;
+  color: var(--ink);
+  background: var(--paper);
+}
+* {box-sizing: border-box}
+body {margin: 0}
+[hidden] {display: none !important}
+button, input, select {font: inherit; color: inherit}
+button, summary, select {cursor: pointer}
+button, summary, a, select {touch-action: manipulation}
+a {color: inherit; text-underline-offset: .2em}
+:focus-visible {outline: 3px solid #df8c22; outline-offset: 3px}
+::selection {background: #c2deaf; color: var(--ink)}
+button {
+  min-height: 42px; padding: 10px 16px; border: 1px solid var(--rule);
+  border-radius: 5px; background: var(--panel); font-weight: 650; font-size: 14px;
+}
+button:disabled {opacity: .6; cursor: default}
+button:not(:disabled):hover {filter: brightness(.95)}
+.wrap {width: min(1440px, 93%); margin-inline: auto}
+.mast {border-bottom: 1px solid var(--rule)}
+.mast .wrap, .brand, .mode, .hero, .manual-tools, .foot {display: flex; align-items: center}
+.mast .wrap {justify-content: space-between; min-height: 56px}
+.brand {gap: 8px; font-size: 21px; font-weight: 700; letter-spacing: -.035em}
+.brand svg {width: 26px; height: 26px}
+.mode {gap: 7px; color: var(--muted); font-size: 12px}
+.mode::before {content: ""; width: 7px; height: 7px; border: 1.5px solid currentColor; border-radius: 50%}
+.hero {gap: 30px; justify-content: space-between; padding: 34px 0 28px}
+.hero h1, .section-title, .decision, .case-title {font-family: var(--serif); font-weight: 400}
+.hero h1 {margin: 0; font-size: clamp(36px, 4.1vw, 63px); letter-spacing: -.04em; line-height: 1.03; text-wrap: balance}
+.hero p {max-width: 72ch; margin: 10px 0 0; line-height: 1.45; color: var(--muted); font-size: 16px}
+body[data-phase]:not([data-phase="0"]):not([data-phase="1"]) .hero {padding-block: 23px}
+.primary {flex-shrink: 0; color: white; background: var(--spruce); border-color: var(--spruce); min-height: 46px}
+.board {display: grid; grid-template-columns: 1fr .93fr 1.48fr; border: 1px solid #bfc8b9; border-radius: 8px; overflow: hidden; background: var(--panel)}
+.panel {padding: clamp(18px, 1.8vw, 30px); min-width: 0}
+.section-title {margin: 0 0 22px; font-size: 24px; letter-spacing: -.035em; line-height: 1.1}
+.dataset {font-size: clamp(18px, 1.6vw, 25px); font-weight: 650; line-height: 1.2; letter-spacing: -.025em}
+.dataset-meta, .caption, .hint {font-size: 14px; line-height: 1.45; color: var(--muted)}
+.dataset-meta {margin-top: 5px}
+.sample-map {margin: 22px 0 0}
+.sample-map figcaption {font-weight: 650; font-size: 14px}
+.rowmap {display: grid; grid-template-columns: repeat(16, minmax(0, 1fr)); gap: 4px; margin: 9px 0}
+.rowmap i {position: relative; aspect-ratio: 1; border-radius: 2px}
+.sample-map {--cell: #d4dccd}
+.sample-map .selected, .sample-map .delivered {--cell: #94713d}
+.sample-map .verified {--cell: var(--green)}
+.sample-map .mismatch {--cell: var(--rust)}
+.rowmap i, .key span::before {background: var(--cell)}
+.rowmap i.mismatch {outline: 1px solid var(--rust); outline-offset: 1px}
+.rowmap i.mismatch::after {content: ""; position: absolute; inset: 46% 15%; background: #fff; transform: rotate(-45deg)}
+.key {display: flex; flex-wrap: wrap; gap: 4px 10px; font-size: 12px; color: var(--muted)}
+.key span::before {content: ""; display: inline-block; width: 8px; height: 8px; margin-right: 5px}
+.preview {width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 19px; font-variant-numeric: tabular-nums}
+.preview caption {text-align: left; padding-bottom: 5px; font-size: 13px; font-weight: 650}
+.preview th {font-weight: 400; color: var(--muted)}
+.preview td, .preview th {text-align: left; padding: 6px 2px; border-bottom: 1px solid #dbe0d4; white-space: nowrap}
+.preview td:last-child, .preview th:last-child {text-align: right}
+.altered, .preview tr:has(.altered) td:first-child {color: var(--rust); font-weight: 700}
+del {color: var(--muted); font-weight: 400}
+.trust {background: #edf1e6; border-left: 1px solid var(--rule)}
+.ledger {list-style: none; padding: 0; margin: 0}
+.ledger li {display: grid; grid-template-columns: 22px 1fr; align-items: center; gap: 8px; padding: 9px 0; color: var(--muted); font-size: 14px; line-height: 1.3}
+.ledger li + li {border-top: 1px solid #d5dcce}
+.step-code {display: grid; place-items: center; width: 20px; height: 20px; border: 1px solid #a5b0a2; border-radius: 50%; font-size: 11px}
+.done .step-code {background: #d1e6c9; color: var(--green); border-color: #95b18c}
+.ledger li.current {font-weight: 650; color: var(--ink)}
+.ledger li.fail, .ledger li.fail .step-code {color: var(--rust); border-color: #bd8c7c; font-weight: 650}
+.tree {display: block; width: 100%; height: 85px; margin-top: 10px}
+.branch {fill: none; stroke: #cad3c4; stroke-width: 1}
+.branch.ok {stroke: var(--green); stroke-width: 1.6}
+.branch.selected {stroke: #94713d; stroke-width: 1.5}
+.branch.broken {stroke: var(--rust); stroke-width: 3; stroke-dasharray: 3 2}
+.node {fill: #b9c5b4}
+.node.selected {fill: #94713d}
+.node.ok {fill: var(--green)}
+.node.broken {fill: var(--rust)}
+.handoff {display: flex; align-items: center; gap: 8px; margin-top: 5px; color: var(--muted); font-size: 12px; line-height: 1.4}
+.handoff:empty {display: none}
+.wire {flex: 1; height: 1px; background: var(--rule); position: relative}
+.wire i {width: 4px; height: 4px; position: absolute; top: -2px; background: var(--green)}
+.agent {background: var(--spruce); color: #f7fbf3; container-type: inline-size}
+.agent .section-title {color: #d7e4d8}
+.decision {margin: 0; font-size: clamp(32px, 3.2vw, 54px); line-height: 1.04; letter-spacing: -.038em; text-wrap: balance}
+.agent[data-tone="good"] .decision {color: var(--mint)}
+.agent[data-tone="bad"] .decision {color: #ffc0a9}
+.hint {margin: 8px 0 0}
+.agent .hint, .receipt {color: #d2ded3}
+.agent .verified {font-size: 14px; margin-top: 16px}
+.agent .verified b {font-variant-numeric: tabular-nums}
+.metrics {display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 14px; border-block: 1px solid #536d5e; padding: 15px 0 12px}
+.metric {display: flex; flex-direction: column-reverse; align-items: start; justify-content: end; gap: 3px; color: #d5e0d7; font-size: 13px; line-height: 1.3}
+.metric-val {font-variant-numeric: tabular-nums; font-size: clamp(23px, 7.6cqw, 43px); font-weight: 550; letter-spacing: -.035em; color: #fff}
+.metric-val.em {color: var(--mint)}
+.unit {margin: 7px 0 0; color: #cedbcf; font-size: 12px}
+.receipt {font-size: 13px; line-height: 1.4; margin: 10px 0 0}
+#edit-start, #edit-action {background: var(--mint); color: var(--ink); border: 0; margin-top: 15px}
+#editor {border-top: 1px solid #536d5e; padding-top: 12px; margin-top: 16px}
+.edit-fields {display: grid; grid-template-columns: 1fr 1.4fr; gap: 12px}
+.edit-fields label {display: grid; gap: 4px; font-size: 13px; color: #dce6dd}
+input, select {border: 1px solid var(--rule); border-radius: 4px; padding: 8px; background: var(--panel); color: var(--ink); max-width: 100%}
+.edit-fields input, .edit-fields select {width: 100%; min-height: 42px}
+#edit-note {font-size: 13px; margin: 7px 0 0; color: #dce6dd}
+#edit-note:empty {display: none}
+.compare {display: grid; grid-template-columns: 1fr 1fr; margin-top: 15px; border-top: 1px solid #536d5e; padding-top: 12px; gap: 12px}
+.case-key {color: #d2ded3; font-size: 12px}
+.case-title {font-size: clamp(18px, 1.7vw, 26px); line-height: 1.2; margin: 4px 0 0; color: var(--mint)}
+.agent[data-tone="bad"] .compare div + div .case-title {color: #ffc0a9}
+.foot {flex-wrap: wrap; align-items: start; gap: 0 24px; margin-block: 12px 24px; color: var(--muted); font-size: 14px}
+.foot details[open] {width: 100%}
+.foot summary {width: fit-content; padding-block: 12px; font-weight: 600}
+.manual-tools {gap: 10px; flex-wrap: wrap; padding: 3px 0 14px}
+.manual-tools button, .restart {min-height: 36px; font-size: 13px; padding: 6px 10px}
+.restart {margin-left: auto; background: transparent}
+.inspect-inner {display: grid; gap: 12px; padding: 4px 0 15px; max-width: 80ch}
+.inspect-inner > * {margin: 0}
+.inspect-inner pre {max-height: 32em; overflow: auto; padding: 15px; background: #e8ebe2; border-radius: 4px; font: 12px/1.5 var(--mono)}
+.root {overflow-wrap: anywhere; font-family: var(--mono)}
+.sr-only {position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%)}
+@media (max-width: 960px) {
+  .wrap {width: 95%}
+  .hero h1 {font-size: 37px}
+  .board {grid-template-columns: 1fr .92fr 1.27fr}
+  .panel {padding: 16px}
+  .section-title {font-size: 21px}
+  .rowmap {gap: 3px}
+}
+@media (max-width: 760px) {
+  .wrap {width: calc(100% - 28px)}
+  .mast .wrap {min-height: 48px}
+  .hero {display: block; padding: 24px 0 18px}
+  .hero h1 {font-size: clamp(37px, 8.5vw, 49px)}
+  .hero p {font-size: 15px}
+  .primary {margin-top: 14px}
+  .board {display: flex; flex-direction: column}
+  .agent {order: -1}
+  .trust {border-left: 0; border-top: 1px solid var(--rule)}
+  .section-title {margin-bottom: 13px}
+  .decision {font-size: 34px}
+  .metrics {padding-block: 10px; margin-top: 12px}
+  .rowmap {grid-template-columns: repeat(16, 1fr); max-width: 340px}
+  .tree {max-width: 380px}
+  .foot {gap: 0 12px}
+}
+@media (prefers-reduced-motion: no-preference) {
+  .wire i {animation: send .65s ease-out both; animation-delay: calc(var(--packet) * .02s)}
+  @keyframes send {from {left: 0} to {left: 100%}}
+}
+</style>
+</head>
+<body>
+<header class="mast"><div class="wrap">
+  <div class="brand"><svg aria-hidden="true" viewBox="0 0 28 28"><rect width="28" height="28" rx="6" fill="#213e30"/><path d="M5 19L13 7h4L9 19zm7 2 8-12 3 3-6 9z" fill="#bef0b5"/></svg>Proofdesk</div>
+  <span class="mode" id="mode">BTC simulation</span>
+</div></header>
 <main class="wrap">
-<div class="hero"><div><h1>The sample showdown.</h1><p>One BTC dataset. Two deliveries. Watch the buyer catch an altered row.</p></div><div class="actions"><button id="play" class="primary"><span class="play-icon" aria-hidden="true">▶</span><span id="play-label">Run showdown</span></button><button id="next">Next step →</button></div></div>
-<div class="casebar"><div class="tabs" role="group" aria-label="Choose a case"><button data-case="0" aria-pressed="true"><b>A</b>Original sample</button><button data-case="1" aria-pressed="false"><b>B</b>Altered sample</button></div><span class="counter" id="counter">Ready to replay</span></div>
-<a class="mobile-status" id="mobile-status" href="#agent"></a>
-<div class="board">
-<section class="panel"><div class="section-title"><span class="icon"><svg aria-hidden="true" viewBox="0 0 20 20"><ellipse cx="10" cy="4.5" rx="7" ry="2.5"/><path d="M3 4.5v10c0 3.5 14 3.5 14 0v-10M3 9.5c0 3.5 14 3.5 14 0"/></svg></span><h2>Seller API</h2></div>
-<div class="dataset">BTC–USD hourly ranges</div><div class="dataset-meta" id="source">Coinbase Exchange</div>
-<figure class="sample-map"><figcaption>64 hourly rows <span>· One square per hour</span></figcaption><div class="rowmap" id="rowmap" aria-hidden="true"></div><div class="key" id="row-key"></div></figure>
-<table class="preview"><caption class="small-label" style="text-align:left;padding-bottom:4px">Seller’s sample excerpt</caption><thead><tr><th scope="col">Row</th><th scope="col">Hour (UTC)</th><th scope="col">Range (bp)</th></tr></thead><tbody id="sample-table"></tbody></table>
-<div class="rootbox"><span class="small-label">Listing Merkle root</span><code class="root" id="root"></code></div></section>
-<section class="panel trust"><div class="section-title"><span class="icon"><svg aria-hidden="true" viewBox="0 0 20 20"><path d="m10 2 7 3v5c0 4-4.5 6.8-7 8-2.5-1.2-7-4-7-8V5Z"/><path d="m6.5 9.5 2.5 2.6 4.8-5"/></svg></span><h2>Protocol ledger</h2></div>
-<div class="ledger-head"><span class="small-label">Merkle proof tree</span><span class="axis">64 leaves</span></div><svg id="tree" class="tree" viewBox="0 0 360 114" role="img" aria-label="Binary Merkle tree for the listing"></svg>
-<div class="handoff" id="handoff"></div>
-<p class="caption" id="stream-trace" hidden><span id="trace-source"></span><br><a id="preview-link">Preview payment</a> → <a id="block-link">Draw block</a></p>
-<ol id="ledger" class="ledger"></ol></section>
-<section class="panel agent" id="agent"><div class="section-title"><span class="icon"><svg aria-hidden="true" viewBox="0 0 20 20"><rect x="3" y="5" width="14" height="11" rx="3"/><path d="M10 2v3m-4 5h1m5 0h1m-6 3h5"/></svg></span><h2>Buyer agent</h2></div>
-<div class="decision-box"><span class="small-label">Purchase decision</span><div class="decision" id="decision">Standing by.</div><p class="hint" id="reason"></p></div>
-<div class="metrics"><div class="metric">Verified rows <span class="metric-val" id="verified">—</span></div><div class="metric">Estimated training value <span class="metric-val em" id="value">—</span></div><div class="metric"><span id="cost-label">Full price + gas</span> <span class="metric-val" id="cost">—</span></div></div>
-<p class="receipt" id="receipt"></p></section></div>
-<div class="compare" id="compare" hidden><div><span class="case-key">Original sample</span><p class="case-title" id="a-result"></p></div><div><span class="case-key">Altered sample</span><p class="case-title" id="b-result"></p></div></div>
-<details class="inspector" id="inspect"><summary>Inspect raw proof</summary><div class="inspect-inner"><p class="hint" id="inspect-note"></p><label id="row-label">Sample row <select id="proof-row"></select></label><pre id="raw"></pre><p><a href="demo.html#merkle">Explore the original proof tree ↗</a></p></div></details>
-<div class="foot"><p id="replay-note">Offline replay · This Arc protocol replay uses a fixed BTC draw and simulated payments. The browser verifies real SHA-256 proofs. The protocol’s preview fee is 0.01 test USDC.</p><button class="restart" id="reset">Reset</button></div>
-<p role="status" id="announce" style="position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)"></p>
+  <div class="hero">
+    <div><h1>Would you buy the other 56 hours?</h1><p>The seller offers 64 hours of BTC data. The buyer paid for an eight-hour preview. Who chose those eight?</p></div>
+    <button id="play" class="primary"><span class="play-icon" aria-hidden="true"></span><span id="play-label">Verify the preview</span></button>
+  </div>
+  <div class="board">
+    <section class="panel">
+      <h2 class="section-title">Seller API</h2>
+      <div class="dataset">BTC–USD hourly ranges</div><div class="dataset-meta" id="source">Coinbase Exchange</div>
+      <figure class="sample-map"><figcaption>64 committed hours</figcaption><div class="rowmap" id="rowmap" aria-hidden="true"></div><div class="key" id="row-key"></div></figure>
+      <div id="table-wrap" hidden><table class="preview"><caption>Selected rows · showing 3 of 8</caption><thead><tr><th scope="col">Row</th><th scope="col">Hour (UTC)</th><th scope="col">Range (bp)</th></tr></thead><tbody id="sample-table"></tbody></table></div>
+    </section>
+    <section class="panel trust">
+      <h2 class="section-title">Sample verification</h2>
+      <ol id="ledger" class="ledger"></ol>
+      <div id="tree-wrap" hidden><svg id="tree" class="tree" viewBox="0 0 360 114" role="img" aria-label="Proof paths for the selected rows"></svg></div>
+      <div class="handoff" id="handoff"></div>
+    </section>
+    <section class="panel agent" id="agent">
+      <h2 class="section-title">Buyer agent</h2>
+      <h3 class="decision" id="decision">Preview paid</h3><p class="hint" id="reason">Eight rows to verify.</p>
+      <div class="verified">Verified rows <b id="verified">—</b></div>
+      <div class="metrics">
+        <div class="metric"><span>Estimated value of the other 56 hours</span><span class="metric-val em" id="value">—</span></div>
+        <div class="metric"><span id="cost-label">Cost to buy them</span><span class="metric-val" id="cost">—</span></div>
+      </div>
+      <p class="unit" id="units">Test USDC · cost includes quoted gas</p>
+      <p class="receipt" id="receipt"></p>
+      <button type="button" id="edit-start" aria-controls="editor" hidden>Change one delivered value</button>
+      <div id="editor" hidden>
+        <div class="edit-fields">
+          <label>Sample row<select id="edit-row"></select></label>
+          <label>Delivered range (bp)<input id="edit-value" required type="number" min="0" step="1" aria-describedby="edit-note"></label>
+        </div>
+        <p id="edit-note" aria-live="polite"></p>
+        <button type="button" id="edit-action">Verify again</button>
+      </div>
+      <div class="compare" id="compare" hidden>
+        <div><span class="case-key">Original delivery</span><p class="case-title" id="a-result"></p></div>
+        <div><span class="case-key">Edited delivery</span><p class="case-title" id="b-result"></p></div>
+      </div>
+    </section>
+  </div>
+  <div class="foot">
+    <details id="inspect"><summary>View proof &amp; receipt</summary><div class="inspect-inner">
+      <p>Listing commitment <code class="root" id="root"></code></p>
+      <p id="stream-trace" hidden><span id="trace-source"></span> · <a id="preview-link">Preview payment</a> · <a id="block-link">Draw block</a></p>
+      <p id="replay-note"></p><p id="inspect-note"></p>
+      <label id="row-label">Sample row <select id="proof-row"></select></label>
+      <pre id="raw"></pre>
+      <p><a href="demo.html#merkle">Explore the detailed proof tree ↗</a></p>
+    </div></details>
+    <details id="manual"><summary>Replay step by step</summary>
+      <div class="manual-tools"><button id="next">Next step →</button><span id="counter"></span></div>
+    </details>
+    <button class="restart" id="reset">Reset</button>
+  </div>
+  <p role="status" id="announce" class="sr-only"></p>
 </main>
 <!--SHOWDOWN_DATA-->
 <!--SHOWDOWN_CORE-->
@@ -53,11 +239,11 @@ const replay = JSON.parse(byId("recorded-runs").textContent);
 const listing = replay.runs["0.20"];
 const draw = replay.btc_draw;
 const recordedDecision = listing.mode === "recorded";
-const formatMoney = units => "$" + (Number(units) / 1e18).toLocaleString("en-US",{minimumFractionDigits:3,maximumFractionDigits:recordedDecision?7:3});
-const excerpt = [...replay.samples].sort((a,b) => a.index-b.index);
-const steps = ["Listing root committed", "Eight indices selected", "Sample + proofs delivered", "Buyer verifies Merkle proofs", "Buyer makes a decision"];
-const duration = [2600, 3500, 4200, 4800, 4800, 6000];
-let caseId=0, phase=0, playing=false, timer, revision=0, result=null, error="", firstVerdict="";
+const cents = units => (Number(units) / 1e16).toFixed(1) + "¢";
+const steps = ["Seller committed 64 rows", "Draw selected eight rows", "Buyer received the preview", "Verify row proofs", "Estimate purchase value"];
+const delays = [0, 0, 700, 850, 650];
+let phase = 1, playing = false, pending = false, editing = false, trial = false;
+let result = null, original = null, error = "", timer, revision = 0;
 function setText(id,text){byId(id).textContent=text}
 function element(tag,text){const node=document.createElement(tag);node.textContent=text;return node}
 function drawTree(samples){
@@ -88,135 +274,220 @@ function inspect(){
   const sample=result.samples.find(s=>s.index===Number(byId("proof-row").value))||result.samples[0];
   setText("raw",JSON.stringify({index:sample.index,row:sample.row,proof:sample.proof,listing_root:listing.root,...(draw?{arc_preview:draw}:{simulated_seed:listing.seed}),draw_order:listing.indices},null,2));
 }
-function render(){
-  const samples=(phase>=3 && result)?result.samples:excerpt;
-  const checked=phase>=4 && result, failed=!!checked && result.verified.includes(false), decided=phase===5 && !!result;
-  const qualityError=checked && result.qualityError;
-  const rejected=failed || Boolean(qualityError);
-  const currentVerdict=rejected?"Purchase skipped":result?.run?.valuation?.decision==="buy"?"Buy decision":"Pass decision";
-  document.querySelectorAll("[data-case]").forEach(b=>b.setAttribute("aria-pressed",String(Number(b.dataset.case)===caseId)));
-  setText("counter",error?"Replay unavailable":(caseId?"Case B":"Case A")+" · "+(phase?"Step "+phase+" of 5":"Ready"));
-  setText("play-label",playing?"Pause":caseId===1 && phase===5?"Replay showdown":phase===0 && !caseId?"Run showdown":"Resume");
-  document.querySelector(".play-icon").textContent=playing?"Ⅱ":"▶";
-  byId("play").disabled=!!error;byId("next").disabled=!!error || (caseId===1 && phase===5);
-  const map=byId("rowmap"), key=byId("row-key");
-  map.replaceChildren();key.replaceChildren();
-  const counts={hidden:0,selected:0,delivered:0,verified:0,mismatch:0};
-  for(let index=0;index<64;index++){
-    let state="hidden";
-    if(phase>=2 && listing.indices.includes(index)){
-      state=result?"delivered":"selected";
-      if(checked){
-        const position=result.samples.findIndex(sample=>sample.index===index);
-        state=result.verified[position]?"verified":"mismatch";
+function render() {
+  const delivered = phase >= 3 && result;
+  const checked = phase >= 4 && result;
+  const decided = phase === 5 && result;
+  const failedAt = checked ? result.verified.indexOf(false) : -1;
+  const failedRow = failedAt >= 0 ? result.samples[failedAt].index : null;
+  const blocked = checked && !result.run;
+  const valuation = result?.run?.valuation;
+  const verdict = blocked ? "Purchase blocked" : valuation?.decision === "buy" ? "Recommend buying" : "Pass on purchase";
+  const headline = error ? "Verification stopped" : [
+    "", draw ? "Preview paid" : "Simulated preview", "Eight rows selected", "Preview delivered",
+    blocked ? "Verification failed" : "Eight proofs match", verdict
+  ][phase];
+  let reason = ["", "Eight rows to verify before pricing the other 56.",
+    "The draw fixes eight positions in the seller’s archive.",
+    "The buyer received eight rows and their proofs.",
+    "The delivered rows match the seller’s commitment.",
+    valuation?.decision === "buy" ? "The expected gain covers the price and gas." :
+      valuation?.reason || "The offer exceeds the buyer’s value or budget."
+  ][phase];
+  if (blocked) reason = failedRow !== null ? "Row #" + failedRow + " fails its proof. Valuation stopped." : result.qualityError;
+  document.body.dataset.phase = phase;
+  byId("agent").dataset.tone = blocked || error ? "bad" : checked ? "good" : "";
+  setText("decision", headline);
+  setText("reason", error || reason);
+  setText("counter", "Step " + phase + " of 5");
+  setText("play-label", pending || playing ? "Verifying…" : "Verify the preview");
+  byId("play").disabled = pending || playing || !!error;
+  byId("play").hidden = !!decided;
+  byId("next").disabled = pending || playing || !!error;
+  setText("next", decided ? "Restart step by step" : "Next step →");
+  byId("edit-start").hidden = !decided || !original?.run || editing || !!error;
+  byId("editor").hidden = !editing;
+  byId("table-wrap").hidden = !delivered;
+  byId("tree-wrap").hidden = !checked;
+  const samples = delivered ? result.samples : [];
+  const map = byId("rowmap"), key = byId("row-key");
+  map.replaceChildren();
+  key.replaceChildren();
+  const counts = new Map();
+  for (let index = 0; index < 64; index++) {
+    let state = "hidden";
+    if (phase >= 2 && listing.indices.includes(index)) {
+      state = delivered ? "delivered" : "selected";
+      if (checked) {
+        const position = result.samples.findIndex(sample => sample.index === index);
+        state = result.verified[position] ? "verified" : "mismatch";
       }
     }
-    const tile=element("i","");
-    tile.title="Row #"+index+" · "+state;
-    tile.className=state;map.append(tile);counts[state]++;
+    const tile = element("i", "");
+    tile.title = "Row #" + index + " · " + state;
+    tile.className = state;
+    map.append(tile);
+    counts.set(state, (counts.get(state) || 0) + 1);
   }
-  for(const [state,count] of Object.entries(counts)){
-    if(!count)continue;
-    const label=element("span",count+" "+(state==="mismatch" && count>1?"mismatches":state));
-    label.className=state;key.append(label);
+  for (const [state, count] of counts) {
+    const label = element("span", state === "mismatch" ? (count === 1 ? "Row #" + failedRow + " failed" : count + " failed") :
+      count + " " + (state === "hidden" ? (phase === 1 ? "committed" : "undisclosed") : state));
+    label.className = state;
+    key.append(label);
   }
-  byId("sample-table").replaceChildren();
-  for(const s of samples.slice(0,3)){
-    const tr=element("tr",""), date=new Date(Number(s.row[0].split(":").pop())*1000);
-    const cell=element("td","");cell.className="field";
-    if(phase>=3 && result?.changedIndex===s.index){
-      cell.classList.add("altered");cell.append(element("del",result.originalValue-1)," → "+(s.row[2]-1));
-    }else cell.textContent=s.row[2]-1;
-    tr.append(element("td","#"+s.index),element("td",date.toISOString().slice(5,16).replace("T"," ")),cell);byId("sample-table").append(tr);
-  }
-  setText("root",listing.root.slice(0,12)+"…"+listing.root.slice(-10));
-  drawTree(samples);
-  const handoff=byId("handoff");
-  handoff.replaceChildren();
-  if(error){
-    handoff.textContent="Delivery stopped before acceptance";
-  }else if(phase===3){
-    const line=element("span","");line.className="wire";line.setAttribute("aria-hidden","true");
-    for(let n=0;n<8;n++){const packet=element("i","");packet.style.setProperty("--packet",n);packet.style.left=(12*n)+"%";line.append(packet)}
-    handoff.append(element("span","Seller API"),line,element("span","→ Buyer inbox"));
-  }else{
-    handoff.textContent=["Recorded BTC commitment","One root binds all 64 rows",draw?"Arc draw · block #"+draw.draw_block:"Recorded draw · seed "+listing.seed,"",failed?"Dashed path · mismatched row":"Eight paths match the root",failed?"Dashed path · mismatched row":"Eight paths match the root"][phase];
-  }
-  const ledger=byId("ledger");ledger.replaceChildren();
-  steps.forEach((label,i)=>{
-    const row=element("li",""),done=phase>i,invalid=failed && i===3;
-    if(i===3 && checked)label=failed?"Proof mismatch · row #"+result.samples[result.verified.indexOf(false)].index:"All eight proofs match";
-    if(i===4 && decided)label=qualityError?"Sample quality check failed":currentVerdict;
-    const stopped=Boolean(error) && phase===i+1;
-    const rejectedStep=invalid || stopped || (qualityError && decided && i===4);
-    if(stopped)label="Delivery check stopped";
-    row.className=(rejectedStep?"fail":done?"done":"")+(phase===i+1?" current":"");
-    const code=element("span",rejectedStep?"×":done?"✓":String(i+1));code.className="step-code";row.append(code,element("span",label));ledger.append(row);
-  });
-  let headline=["Standing by.","Root received.","Draw received.","Sample received.",failed?"Mismatch found.":"Proofs match.",currentVerdict+"."][phase];
-  const v=result?.run?.valuation;
-  const messages=["Run the discovery to follow both deliveries.","The seller has fixed the contents of its 64-row listing.","The recorded draw picks eight indices before the API returns any rows.","The buyer reproduced the draw and received all eight selected rows with proofs.",failed?"One delivered range fails the original commitment. Valuation is blocked.":"Each sampled row belongs to the committed listing.",failed?"One changed range breaks its proof. The buyer stops before pricing the other 56 rows.":v?.decision==="buy"?"The estimated value of the remaining 56 hours covers the full price and gas.":"The purchase does not meet the buyer’s value and budget limits."];
-  setText("mobile-status","Buyer agent · "+(error?"Replay unavailable":headline)+" ↓");
-  setText("decision",error?"Replay unavailable.":headline);setText("reason",error||qualityError||messages[phase]);
-  byId("agent").dataset.tone=rejected || error?"bad":phase>=4?"good":"";
-  setText("verified",checked?result.verified.filter(Boolean).length+" / "+result.samples.length:"—");
-  setText("value",decided && v?(v.estimated_value_base_units===undefined?"Skipped":formatMoney(v.estimated_value_base_units)):rejected?"Skipped":"—");
-  setText("cost",formatMoney(listing.valuation.total_cost_base_units ?? listing.valuation.price_base_units));
-  setText("receipt",decided?(rejected?"$0 spent on the full dataset.":v?.decision==="buy"?v.historical_mean_gain_bps.toFixed(2)+" bp expected gain × $"+(Number(v.reward_base_units_per_bp)/1e18).toFixed(2)+"/bp. "+(recordedDecision?"Recorded buy decision.":"Simulated purchase."):"Recorded pass · full purchase skipped."):"BTC buyer replay · no wallet signature required.");
-  const compare=byId("compare");compare.hidden=!(caseId && decided && firstVerdict);
-  if(!compare.hidden){setText("a-result",firstVerdict);setText("b-result",currentVerdict+" · "+result.verified.filter(Boolean).length+"/8 verified")}
-  inspect();setText("announce",(caseId?"Altered sample. ":"Original sample. ")+(error||headline));
-}
-function schedule(){
-  clearTimeout(timer);
-  if(playing && !error)timer=setTimeout(advance,duration[phase]);
-}
-async function enter(id,step){
-  clearTimeout(timer);const request=++revision;
-  if(id!==caseId || step===0){result=null;byId("proof-row").replaceChildren()}
-  caseId=id;phase=step;error="";
-  if(step>=3 && !result){
-    try{
-      const evidence=await Showdown.evaluate(replay,Boolean(id));
-      if(request!==revision)return;
-      result=evidence;
-      for(const s of result.samples){const opt=element("option","#"+s.index);opt.value=s.index;byId("proof-row").append(opt)}
-    }catch(e){
-      if(request!==revision)return;
-      error=e.message || "The browser could not verify the replay.";playing=false;
+  const excerpt = samples.slice(0, 3);
+  if (failedRow !== null && !excerpt.some(s => s.index === failedRow)) excerpt[2] = samples[failedAt];
+  const table = byId("sample-table");
+  table.replaceChildren();
+  for (const sample of excerpt) {
+    const date = new Date(Number(sample.row[0].split(":").pop()) * 1000);
+    const tr = element("tr", ""), cell = element("td", sample.row[2] - 1);
+    cell.className = "field";
+    if (result.changedIndex === sample.index) {
+      cell.classList.add("altered");
+      cell.replaceChildren(element("del", result.originalValue - 1), " → " + (sample.row[2] - 1));
     }
+    tr.append(element("td", "#" + sample.index), element("td", date.toISOString().slice(5,16).replace("T"," ")), cell);
+    table.append(tr);
   }
-  if(step===5 && id===0 && result)firstVerdict=(result.run?.valuation?.decision==="buy"?"Buy decision":result.run?"Pass decision":"Purchase skipped")+" · "+result.verified.filter(Boolean).length+"/8 verified";
-  if(step===5 && id===1)playing=false;
-  render();schedule();
+  if (checked) drawTree(samples);
+  setText("handoff", ["", "Seller commitment recorded", "Eight positions fixed by the draw",
+    "Seller API → buyer inbox", "Checking delivered rows", failedRow !== null ? "Broken proof · row #" + failedRow : "Proof checks complete"][phase]);
+  const ledger = byId("ledger");
+  ledger.replaceChildren();
+  steps.forEach((label, i) => {
+    const fail = (failedRow !== null && i === 3) || (blocked && i === 4);
+    if (i === 3 && checked) label = failedRow !== null ? "Proof failed · row #" + failedRow : "All eight proofs match";
+    if (i === 4 && decided) label = blocked ? "Valuation skipped" : "Value compared with cost";
+    const done = i < phase;
+    const row = element("li", "");
+    row.className = (fail ? "fail" : done ? "done" : "") + (i === phase - 1 ? " current" : "");
+    const icon = element("span", fail ? "×" : done ? "✓" : i + 1);
+    icon.className = "step-code";
+    row.append(icon, element("span", label));
+    ledger.append(row);
+  });
+  setText("verified", checked ? result.verified.filter(Boolean).length + " / 8" : "—");
+  setText("value", blocked ? "Skipped" : decided && valuation?.estimated_value_base_units !== undefined ?
+    cents(valuation.estimated_value_base_units) : "—");
+  setText("cost", cents(listing.valuation.total_cost_base_units ?? listing.valuation.price_base_units));
+  setText("receipt", draw ? "Only the preview payment settled." : "Simulated payments.");
+  byId("compare").hidden = !trial || !decided;
+  if (trial && decided) {
+    setText("a-result", (original.run.valuation.decision === "buy" ? "Recommend buying" : "Pass on purchase") + " · 8/8");
+    setText("b-result", verdict + " · " + result.verified.filter(Boolean).length + "/8");
+  }
+  inspect();
+  setText("announce", headline + ". " + (error || reason));
 }
-function advance(){if(phase===5){if(!caseId)enter(1,0)}else enter(caseId,phase+1)}
-byId("play").onclick=()=>{
-  if(playing){playing=false;clearTimeout(timer);render();return}
-  playing=true;
-  if(caseId===1 && phase===5){firstVerdict="";enter(0,1)}else if(!phase)enter(caseId,1);else{render();schedule()}
+async function advance() {
+  if (pending || phase >= 5) return;
+  clearTimeout(timer);
+  const ticket = revision;
+  try {
+    if (phase === 2) {
+      pending = true;
+      render();
+      const evidence = await Showdown.evaluate(replay, false);
+      if (ticket !== revision) return;
+      result = original = evidence;
+      populateRows("proof-row");
+      populateRows("edit-row");
+      pending = false;
+    }
+    phase++;
+    if (phase === 5) playing = false;
+  } catch (cause) {
+    if (ticket !== revision) return;
+    error = cause.message;
+    pending = playing = false;
+  }
+  render();
+  if (playing) timer = setTimeout(advance, delays[phase]);
+}
+function populateRows(id) {
+  const select = byId(id);
+  select.replaceChildren();
+  for (const sample of result.samples) select.add(new Option("#" + sample.index, sample.index));
+}
+function reset() {
+  revision++;
+  clearTimeout(timer);
+  pending = playing = editing = trial = false;
+  phase = 1;
+  result = original = null;
+  error = "";
+  render();
+}
+byId("play").onclick = () => { playing = true; advance(); };
+byId("next").onclick = () => { if (phase === 5) reset(); else advance(); };
+byId("reset").onclick = reset;
+byId("proof-row").onchange = inspect;
+function proposeEdit() {
+  const row = original.samples.find(s => s.index === Number(byId("edit-row").value));
+  const field = byId("edit-value");
+  // BTC ranges are stored plus one. Suggest a one-basis-point change.
+  const originalBps = row.row[2] - 1;
+  field.value = originalBps + 1;
+  field.setCustomValidity("");
+  setText("edit-note", "Original range: " + (row.row[2] - 1) + " bp. Try any whole number.");
+}
+byId("edit-start").onclick = () => {
+  editing = true;
+  proposeEdit();
+  render();
+  byId("edit-value").focus();
+  byId("edit-value").select();
 };
-byId("next").onclick=()=>{playing=false;advance()};
-document.querySelectorAll("[data-case]").forEach(b=>b.onclick=()=>{playing=false;firstVerdict="";enter(Number(b.dataset.case),0)});
-byId("reset").onclick=()=>{playing=false;firstVerdict="";enter(0,0)};
-byId("proof-row").onchange=inspect;
-if(draw){
-  setText("mode","Arc Testnet replay");
-  setText("cost-label",recordedDecision?(listing.valuation.total_cost_base_units?"Offer + quoted gas":"Full offer price"):"Modeled full price + gas");
-  setText("trace-source",(draw.quicknode_streams?"QuickNode Streams":"Arc RPC")+" · Arc Testnet");
-  const origin=draw.quicknode_streams?"QuickNode Streams delivered blocks verified against Arc RPC.":"Arc RPC verified the listing and preview payment.";
-  const decision=recordedDecision?"The buyer’s recorded decision uses the signed offer and available funds. Full purchase settlement is outside this replay.":"The full purchase decision and its costs are modeled.";
-  setText("replay-note",origin+" The buyer paid 0.01 test USDC for the preview. This page reconstructs its eight BTC rows from the seller snapshot. "+decision);
-  byId("stream-trace").hidden=false;
-  const explorer="https://explorer.testnet.arc.io/";
-  byId("preview-link").href=explorer+"tx/"+draw.request_tx;
-  setText("preview-link","Preview · #"+draw.request_block);
-  byId("block-link").href=explorer+"block/"+draw.draw_block;
-  setText("block-link","Draw · #"+draw.draw_block);
+byId("edit-row").onchange = proposeEdit;
+byId("edit-value").oninput = () => byId("edit-value").setCustomValidity("");
+byId("edit-action").onclick = async event => {
+  event.preventDefault();
+  if (pending) return;
+  const field = byId("edit-value");
+  if (!field.reportValidity()) return;
+  const ticket = revision;
+  pending = true;
+  byId("edit-action").disabled = true;
+  try {
+    const edit = {index: Number(byId("edit-row").value), rangeBps: field.valueAsNumber};
+    const evidence = await Showdown.evaluate(replay, edit);
+    if (ticket !== revision) return;
+    result = evidence;
+    trial = true;
+    editing = false;
+    byId("proof-row").value = edit.index;
+  } catch (cause) {
+    if (ticket !== revision) return;
+    field.setCustomValidity(cause.message);
+    field.reportValidity();
+  } finally {
+    if (ticket === revision) {
+      pending = false;
+      render();
+      if (!editing) byId("edit-start").focus({preventScroll:true});
+    }
+    byId("edit-action").disabled = false;
+  }
+};
+setText("root", listing.root);
+if (draw) {
+  setText("mode", "Arc Testnet replay");
+  setText("trace-source", draw.quicknode_streams ? "QuickNode Streams · Arc Testnet" : "Arc RPC · Arc Testnet");
+  byId("stream-trace").hidden = false;
+  const explorer = "https://explorer.testnet.arc.io/";
+  byId("preview-link").href = explorer + "tx/" + draw.request_tx;
+  byId("block-link").href = explorer + "block/" + draw.draw_block;
 }
-const monthFormat=new Intl.DateTimeFormat("en",{month:"short",year:"numeric",timeZone:"UTC"});
-const sampleMonths=excerpt.map(s=>monthFormat.format(Number(s.row[0].split(":").pop())*1000));
-const months=[...new Set(sampleMonths)];
-setText("source","Coinbase Exchange · "+(months.length===1?months[0]:months[0]+" – "+months.at(-1)));
+if (!draw) document.querySelector(".hero p").textContent =
+  "The seller offers 64 hours of BTC data. The buyer gets eight in a simulated preview. Who chose those eight?";
+if (listing.valuation.total_cost_base_units === undefined) setText("units", "Test USDC · offer price");
+const costUnits = listing.valuation.total_cost_base_units ?? listing.valuation.price_base_units;
+setText("replay-note", (draw ? "The preview cost 0.01 test USDC plus gas. " : "The preview and payments are simulated. ") +
+  (recordedDecision ? "Recorded buyer recommendation. " : "Modeled buyer decision. ") +
+  "Full offer" + (listing.valuation.total_cost_base_units ? " including quoted gas" : "") +
+  ": " + Number(costUnits) / 1e18 + " test USDC." +
+  (listing.valuation.estimated_value_base_units === undefined ? "" : " Original " + (recordedDecision ? "recorded" : "modeled") + " estimate: " +
+   Number(listing.valuation.estimated_value_base_units) / 1e18 + " test USDC."));
 render();
 </script></body></html>

@@ -92,15 +92,24 @@ globalThis.Showdown = (() => {
       throw Error("Recorded selection or delivery differs from the independently reproduced draw.");
     }
     const samples = structuredClone(data.samples).sort((a, b) => a.index - b.index);
-    const first = samples[0];
-    const originalValue = first.row[2];
-    if (altered) first.row[2] += 100;
+    const edited = altered && altered !== true
+      ? samples.find(sample => sample.index === altered.index)
+      : samples[0];
+    if (!edited) throw Error("Choose a delivered row to edit.");
+    const originalValue = edited.row[2];
+    if (altered) {
+      const rangeBps = altered === true ? originalValue - 1 + 100 : altered.rangeBps;
+      if (!Number.isSafeInteger(rangeBps) || rangeBps < 0 || rangeBps >= Number.MAX_SAFE_INTEGER) {
+        throw Error("Enter a nonnegative whole number of basis points within the supported range.");
+      }
+      edited.row[2] = rangeBps + 1;
+    }
     const verified = await Promise.all(samples.map(sample => matchesRoot(sample, run.root)));
     const valid = verified.every(Boolean);
     const qualityError = valid ? sampleQualityError(samples) : null;
     return {
       samples, verified, originalValue,
-      changedIndex: altered ? first.index : null,
+      changedIndex: edited.row[2] !== originalValue ? edited.index : null,
       qualityError, run: valid && !qualityError ? run : null,
     };
   }

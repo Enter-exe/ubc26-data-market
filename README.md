@@ -1,197 +1,122 @@
-# UBC26 · Try-before-you-buy data market for agents
+# Proofdesk
 
-A seller commits to 64 hourly BTC–USD training examples. An agent pays for eight examples selected through Arc, checks their Merkle proofs and estimates the training value of the other 56. If that value covers the full price and gas within its remaining budget, it prepares a wallet payment. After delivery the buyer can measure what its money bought.
+**A verifiable preview for agent data purchases.**
 
-## Show the judges
+An agent considering a data purchase needs a way to judge whether the data is useful before committing its budget. Some sellers price access as a larger order or package, making a small independent purchase difficult. A seller-provided preview can help, but a hand-picked sample may give a misleading view of the full listing.
 
-Open [the Bitcoin showdown](showdown.html) locally, or run `python3 desk.py` and visit [the BTC dashboard](http://127.0.0.1:8765/btc). Select **Run showdown**. The seller committed 64 historical Coinbase BTC–USD rows on Arc Testnet. The buyer paid **0.01 test USDC** for a preview, plus **0.000573** in gas. Two blocks later, the draw selected rows **50, 53, 60, 47, 38, 55, 63, 49**. The browser reproduces the selection and verifies the eight Merkle proofs offline. In the altered case, changing one range breaks its proof and the agent stops before pricing.
+Proofdesk coordinates a paid preview whose rows are selected after the seller commits to the dataset. The buyer verifies that the delivered rows belong to that commitment, evaluates their usefulness for its own task, and decides whether the remaining data is worth the price. The approach is intended for different kinds of sellers, data, and agents. The current implementation demonstrates a buyer forecasting Bitcoin price ranges using a fixed 64-row dataset.
 
-In the original delivery the buyer estimated **0.2828125 test USDC** of additional training value against **0.1005834** for the full dataset including quoted gas. It recommended buying. The only buyer payment executed was for the preview. [Listing commitment](https://testnet.arcscan.app/tx/0xd334d50ff26656d8891d5990cffe9c60e1591949d51c7cf72a0f1c070c1889b1) · [Full-price offer](https://testnet.arcscan.app/tx/0x4f344944b484f2b9ec4dce47c1dfe69e656210652c730f1335880d5278d7103c) · [Preview payment](https://testnet.arcscan.app/tx/0x19a8667c21d519f9716aa748658799763125aa0946001907290d828cbfbd956b) · [Buyer decision](examples/arc-btc-decision.json)
+## Try the demo
 
-## Explore the original demo
+**Requirements:** Python 3 and a modern desktop browser with JavaScript enabled. The Python server uses only the standard library. The interactive replay needs no API key, wallet, testnet funds, or internet connection.
 
-[Watch the narrated judge demo (2:27, MP4)](proofdesk-judges.mp4). The recording includes optional English subtitles and shows both buyer decisions, sample verification, and the result on unseen hours.
+1. Clone or download this repository and open a terminal in its root directory.
+2. Start the local server:
 
-Download and open [demo.html](demo.html) in a desktop browser. All assets and both recorded BTC buyer runs are embedded, so the console also works offline. With `python3 desk.py` running, the same console is available at [the original demo route](http://127.0.0.1:8765/demo.html). Click **Play exchange** or select a step to follow the seller commitment, Arc draw, private API delivery, proof check and buying decision. During **Deliver**, the request travels to the API and eight row packets arrive in the agent inbox. Click a delivered index to inspect its actual training values and six hash joins on the 64-leaf Merkle tree. Switch the reward from **0.10** to **0.20** to see the same preview trigger a buy, then compare the forecast with the actual holdout result. Expand **Inspect sample & payment evidence** to recompute all eight BTC Merkle proofs in the browser. **Reproduce Chicago draw** replays the selection from the recorded testnet payment, seller commitment and future block hash, and checks the eight indices against the public receipt. [Watch the 21-second walkthrough](proofdesk-demo.webm).
+   ```sh
+   python3 desk.py
+   ```
 
-Rebuild the standalone showdown from its embedded evidence with `python3 build_demo.py --showdown`. To regenerate the paid showdown from the seller snapshot and the saved buyer decision, use `python3 build_demo.py --snapshot /tmp/btc-listing.json --benchmark /tmp/btc-buyer.json --btc-draw examples/arc-btc-decision.json`. To regenerate both pages with simulated draws instead, run `python3 build_demo.py --snapshot /tmp/btc-listing.json --benchmark /tmp/btc-buyer.json`.
+3. Open **[http://127.0.0.1:8765/btc](http://127.0.0.1:8765/btc)**.
+4. Click **Verify the preview**. The app reproduces the recorded selection and verifies all eight rows. The buyer recommends buying when its estimated value for the other 56 hours is **28.3¢**, compared with **10.1¢** for the offer and quoted gas.
+5. Click **Change one delivered value**, select **#38**, change **191** to **195**, and click **Verify again**. The row fails its Merkle proof and the buyer blocks the purchase before valuation.
+6. Expand **View proof & receipt** to inspect the commitment and links to the testnet evidence. Press Ctrl+C in the terminal to stop the server.
 
-## Run the BTC training-data demo
+[Watch the narrated demo video (2:07)](proofdesk-demo-compatible.mp4).
 
-The seller source is historical Coinbase Exchange BTC–USD candles. Each example pairs the preceding hour’s high–low range with the current hour’s range. Ranges are relative to the opening price, rounded to basis points and stored plus one. Adjacent examples share an hourly range. If both hours appear in the preview, the buyer compares the earlier row’s observed range with the later row’s preceding range. A disagreement blocks valuation even if both Merkle proofs match. These public candles stand in for a seller feed; anyone can recreate this particular listing from Coinbase. [Coinbase candle API](https://docs.cdp.coinbase.com/api-reference/exchange-api/rest-api/products/get-product-candles)
+The screen is an interactive **replay of a recorded Arc Testnet preview**, with verification and the row edit performed in the browser. It does not send a new transaction. The seller's 64 hourly examples are derived from public Coinbase BTC–USD candles, which stand in for a proprietary seller dataset. The preview payment settled on testnet. The full purchase is a recommendation and unsigned payment request, not a completed transaction.
 
-```sh
-python3 btc_snapshot.py --output /tmp/btc-listing.json --benchmark-output /tmp/btc-buyer.json
-python3 btc_buyer.py rehearse --snapshot /tmp/btc-listing.json --benchmark /tmp/btc-buyer.json \
-  --seed 26 --remaining-budget 0.20 --reward-per-bp 0.10
-```
+## How it works
 
-The first command fetches historical data. The second runs offline with a deterministic simulated draw and simulated payments. The seller’s 64 examples and the buyer’s 192 earlier calibration hours and 64 later holdout hours occupy disjoint candle windows. The two files can also be fetched independently.
+1. **Commit.** The seller freezes 64 ordered rows and hashes each indexed row into a SHA-256 Merkle tree. The seller publishes the 32-byte root in an Arc Testnet transaction before the preview is selected.
+2. **Pay and draw.** The buyer pays **0.01 test USDC** plus gas for the preview. A deterministic draw combines the listing root, the payment transaction hash, and the hash of the finalized block two heights after the payment. It selects eight distinct positions. The future block makes the selected positions harder to predict before the seller commits.
+3. **Deliver and verify.** The seller's authenticated API provides the selected rows and their Merkle paths to the buyer. The buyer independently reproduces the draw and uses each row and its six sibling hashes to reconstruct the committed root. It rejects altered rows or incorrect positions. Adjacent sampled BTC rows also undergo a consistency check.
+4. **Evaluate.** The buyer retains the eight verified rows and estimates the value of the other 56 using historical forecasting experiments. The live buyer checks affordability through Arc's USDC contract and compares the estimate with the full listing price plus quoted gas and its remaining budget. When the estimate exceeds the cost and the budget covers it, the buyer produces an unsigned wallet request. A signer must authorize the transaction.
 
-The buyer predicts hourly range from the three training hours with the most similar preceding ranges. On historical windows it compares keeping eight examples against training on all 64, always including the buyer’s earlier training history. It averages the error reduction from the eight historical previews most similar to the current sample. The buyer sets the value in test USDC of lowering mean absolute forecast error by one basis point. The preview fee is already spent when the buyer compares that estimate with the full price plus gas. Overlapping historical windows give limited evidence, and market conditions can change.
+The Merkle check establishes that a delivered row matches the committed listing. The sample draw reduces the seller's ability to hand-select rows after the commitment. The buyer still evaluates whether the sample is useful for its own task.
 
-On the January 2024 snapshot, seed 26 projected **0.883 basis points** of improvement. With the reward above, the buyer valued the remaining rows at **0.0883 test USDC** and passed on a **0.101** total cost. Set `--reward-per-bp 0.20` with the same draw and budget and it buys at an estimated value of **0.1766**. After delivery, error on the untouched holdout rose from **39.125 to 41.75 basis points**. This run overestimated the additional training value.
+## Technology and blockchain components
 
-## Use the BTC buyer on Arc testnet
-
-1. Prepare a listing with `python3 arc_intent.py listing --dataset btc-usd-hourly --seller "$SELLER" --root "$ROOT"`. Sign it with the seller test wallet. The protocol places a BTC-specific tag and the root onchain. Publish the full offer using the `offer` command below and start the private seller service with the BTC snapshot and confirmed offer hash.
-2. Prepare the sample with `python3 arc_intent.py request --dataset btc-usd-hourly --seller "$SELLER" --buyer "$BUYER" --listing-tx "$LISTING_TX" --expected-root "$ROOT"`. This checks the finalized schema and commitment before the wallet signs the 0.01 test-USDC payment. Save its hash as `REQUEST_TX`.
-3. Once the draw finalizes, run the buyer with the seller token in `UBC26_BUYER_TOKEN`. The same variables identify the listing, preview and offer throughout the purchase.
-
-```sh
-python3 btc_buyer.py decide --seller "$SELLER" --buyer "$BUYER" --listing-tx "$LISTING_TX" \
-  --request-tx "$REQUEST_TX" --offer-tx "$OFFER_TX" --benchmark /tmp/btc-buyer.json \
-  --remaining-budget 0.20 --reward-per-bp 0.10
-```
-
-The buyer reads Arc, verifies the paid preview, checks the finalized offer and consults the wallet balance and gas quote. A buy decision includes an unsigned wallet request with the quoted gas limit and price. After signing it once and waiting for finality, run the following to verify payment and full delivery and score forecast error on the reserved hours.
-
-```sh
-python3 btc_buyer.py assess --seller "$SELLER" --buyer "$BUYER" --listing-tx "$LISTING_TX" \
-  --request-tx "$REQUEST_TX" --offer-tx "$OFFER_TX" --purchase-tx "$PURCHASE_TX" \
-  --benchmark /tmp/btc-buyer.json
-```
-
-**Using QuickNode for the Bitcoin demo.** The seller supplies Coinbase BTC–USD rows. QuickNode Streams supplies the Arc payment and future block that select the eight rows. After paying for the BTC listing, configure the same [Stream filter](quicknode_filter.js) over its payment block through payment block + 2, inclusive. Save those delivery files in a BTC-specific directory. For either `decide` or `assess`, replace `--request-tx "$REQUEST_TX"` above with `--stream-delivery /path/to/btc-deliveries/*.json`. The buyer checks the BTC listing tag, verifies the draw and sample, then prices the remaining 56 market-data rows. The BTC payment and draw finalized in blocks **73152620–73152622**. QuickNode delivered those three blocks to the buyer, which independently verified the draw against Arc RPC. The saved [Bitcoin webhook deliveries](examples/quicknode-btc-stream) can replace the live stream when replaying this purchase decision.
-
-## Run the synthetic freight demo
-
-Two synthetic sellers offer freight quotes. The buyer pays for samples, measures usefulness on its own pricing task and buys the qualifying offer with the largest estimated surplus.
-
-Run `python3 market.py` with Python 3.8 or later. It uses the standard library and runs offline. The terminal shows each seller’s commitment, the buyer’s sampled indices, proof results, prediction errors, prices, decision, and remaining balance.
-
-For the interactive buyer desk, run `python3 desk.py` and open [the local demo](http://127.0.0.1:8765). Change the price with the same sample to see when the buyer walks away. The scenario selector can replace both offers with stale data or alter one regional quote after commitment. Expand a seller to inspect each row and its verification result. Download the JSON receipt for the full proof paths, wallet ledger and replay settings. Reproduce a draw with `python3 market.py --seed 26 --scenario baseline --price 40 --json`, substituting the values in your receipt. Each evaluation starts a separate simulated wallet.
-
-Each synthetic seller commits one quote per lane across the same public catalog of 64 freight lanes. The buyer has a separate benchmark quote on each lane. For each verified sample it can fit a rate per mile, use the sampled quotes as route-specific lookups, or combine both sellers' retained rows. It picks the lowest mean absolute error among those strategies and the existing baseline. This is the buyer's alternative to making a purchase.
-
-The estimated error of a full listing is its average quote error on the eight randomly sampled lanes. The purchase rule converts the projected reduction **beyond the best retained strategy** into credits (ten error units per credit), checks the asking price and budget, and buys at most one listing. After delivery it verifies the Merkle root and reports the measured error across all lanes. A small sample can misestimate full-listing error. The same private benchmark selects the retained strategy and measures performance, so these figures describe the demo benchmark rather than independent production performance.
-
-For a contrasting run, choose **One rate fits every route**. A good sample can teach the agent enough to keep its credits. Receipt version 2 records retained, projected and delivered errors. Version 1 receipts can be replayed with the CLI at commit `482aebc`.
-
-This demonstrates a purchase rule under controlled conditions. A valid proof establishes membership in the committed dataset. Label quality, representative sampling across buyers, and the value of unseen rows are separate questions. In the freight demo, all participants run in one process. Its wallet is simulated, and rerunning the script starts a fresh session.
-
-## Hackathon scope
-
-The original project proposed two sellers of labeled truck images. The image datasets are currently unavailable. Freight quote prediction provides a stand-in with a measurable loss until licensed data and a separate buyer benchmark are available.
-
-| Milestone | Deliverable | Acceptance criterion |
-| --- | --- | --- |
-| 1 · Offline buying decision (implemented) | Two commitments, paid samples, proof checks, held-out evaluation, buy or pass, full delivery | A single run explains each decision using measured error and accounts for both fees and the purchase. |
-| 2 · Inspectable demo | Buyer and seller boundaries, a replayable decision receipt, and a UI showing samples, scores, price, and wallet history | A viewer can trace which rows and proof root drove a purchase. A changed row fails verification. A run with two poor offers ends without a purchase. |
-| 3 · Testnet settlement (paid preview verified, full purchase pending) | Register a listing commitment, collect a sample fee, and settle one full purchase on a test network | Receipt links show successful transactions. A retry can recover the same purchase without another charge. |
-| 4 · Real evaluation | Use licensed records, a private holdout, and repeated draws at several sample sizes | Report variation in sample decisions and compare them with measured utility after full delivery. |
-
-The larger protocol adds seller collateral, stronger resistance to block-proposer bias, learning curves, and chunked payments with a dispute mechanism. Prioritize these once the end-to-end purchase is demonstrable. Repeated small purchases could expose much of a listing. A deployed market needs a per-listing disclosure and pricing policy before offering valuable data.
-
-## Proposed hackathon entry
-
-Enter Agentic Payments & AI and opt in to Best use of Arc. The buyer paid for the Bitcoin preview on Arc Testnet, verified all eight proofs and priced the remaining 56 rows. Full purchase settlement is a separate milestone.
-
-The track and Arc awards can stack ($2,000 and $1,000), alongside an overall award and qualifying bounties. Solana is an alternative chain award ($1,500). Teams select one chain award. Submit a public repo, working demo, technical README and 2–3 minute video by November 20 at noon Central. Finalists must attend the November 21 closing ceremony in person for prizes. [Official guide](https://docs.google.com/document/d/1QaySCo7u3VxMVNdk3C5Ab3ewc2E46AuLntti-Uzx5EY/edit) · [Devpost](https://ubc-hackathon-2026.devpost.com/)
-
-## QuickNode Streams bounty setup
-
-The **Bitcoin** demo uses a completed, three-block QuickNode Stream on Arc Testnet. The Stream captures the 0.01 test-USDC preview payment and the hash of the finalized block two heights later. The buyer combines those with the seller’s listing root to select eight rows, independently checks Arc finality, then retrieves the rows and Merkle proofs from the seller’s authenticated API. Coinbase supplies the historical BTC prices. [QuickNode Stream](https://dashboard.quicknode.com/streams/1ca9b32c-e4aa-4ef5-9a67-01e9bb273acf) · [Three webhook deliveries](examples/quicknode-btc-stream) · [Verified Bitcoin decision](examples/arc-btc-decision.json)
-
-| QuickNode setting | Bitcoin backfill |
+| Component | How Proofdesk uses it |
 | --- | --- |
-| Network and dataset | Arc Testnet · Block |
-| Block range | 73,152,620 through 73,152,622, inclusive, one block per message |
-| JavaScript filter | Keep block numbers and hashes. Extract 0.01 test-USDC preview payments with the sample tag and listing reference. [Filter source](quicknode_filter.js) |
-| Destination | Temporary HTTPS webhook, closed after three deliveries. Each body includes the source Stream ID. |
+| **Arc Testnet and USDC contract** | The seller anchors the listing root and a full-price offer in transaction input data. The buyer pays the preview fee with native test USDC. For a live purchase decision, the buyer also reads the existing USDC contract's `balanceOf` to check affordability, and checks native balance for gas. Arc records provide replayable payment and draw evidence. |
+| **Merkle tree and SHA-256** | A 64-leaf tree commits to the ordered dataset. Six sibling hashes per preview row allow the buyer to check membership without receiving the other rows. Hashing and verification run offchain. |
+| **QuickNode Streams** | A historical Arc Testnet block stream delivers the preview payment and the later draw block. The buyer processes the saved stream deliveries and independently checks them against Arc RPC. |
+| **Buyer and seller services** | Python implements the authenticated seller API, Arc receipt verification, draw, buyer budget checks, and forecasting-based valuation. The demo's buyer uses a task-specific heuristic and does not require an LLM. |
+| **Browser demo** | HTML, CSS, and JavaScript replay the recorded flow and verify sample proofs locally using the browser's Web Crypto API. |
+| **Coinbase Exchange data** | Public hourly BTC–USD candles provide a reproducible example dataset for the seller and forecasting task. Coinbase is the data source, while QuickNode supplies onchain events. |
 
-Reproduce the Bitcoin draw from the captured deliveries and the public Arc Testnet RPC. This is read-only and costs no test USDC.
+### Arc evidence
+
+The recorded preview uses native transfers and tagged transaction input data between externally owned accounts. The live buyer also calls Arc's existing USDC contract to check the buyer's balance before preparing a full purchase. Proofdesk does not deploy its own contract. The wallet request requires an external signer.
+
+- **Network:** Arc Testnet, chain ID **5042002**.
+- **USDC contract used:** [`0x3600000000000000000000000000000000000000`](https://testnet.arcscan.app/address/0x3600000000000000000000000000000000000000). In [`btc_buyer.py`](btc_buyer.py), the live `decide` flow calls `balanceOf(buyer)` using `eth_call` and checks that the balance covers the offer. It uses the native balance separately for the price-plus-gas and budget check. These are two views of the same USDC balance, not separate funds. The contract reports six decimal places and the native interface reports eighteen. The browser replay and recorded transaction evidence predate this balance check.
+- **Seller account:** [`0xbdaf6907e159e633939e9db63adc35b2045db61f`](https://testnet.arcscan.app/address/0xbdaf6907e159e633939e9db63adc35b2045db61f).
+- **Buyer account:** [`0x565ff030eba37c58a595118f3cc6a3d341b6b414`](https://testnet.arcscan.app/address/0x565ff030eba37c58a595118f3cc6a3d341b6b414).
+- **Onchain records:** [listing commitment](https://testnet.arcscan.app/tx/0xd334d50ff26656d8891d5990cffe9c60e1591949d51c7cf72a0f1c070c1889b1), [full-price offer](https://testnet.arcscan.app/tx/0x4f344944b484f2b9ec4dce47c1dfe69e656210652c730f1335880d5278d7103c), and [preview payment](https://testnet.arcscan.app/tx/0x19a8667c21d519f9716aa748658799763125aa0946001907290d828cbfbd956b).
+- **Recorded draw and decision:** [`examples/arc-btc-decision.json`](examples/arc-btc-decision.json). The preview payment settled in block **73,152,620**. Block **73,152,622** supplied the future block hash. The preview cost **0.01 test USDC**, plus **0.000573 test USDC** in gas.
+
+To read the recorded buyer account's current contract balance independently, send this read-only request. It requires internet access and returns a hexadecimal 32-byte integer in six-decimal USDC units:
 
 ```sh
-SELLER=0xbdaf6907e159e633939e9db63adc35b2045db61f
-BUYER=0x565ff030eba37c58a595118f3cc6a3d341b6b414
-LISTING_TX=0xd334d50ff26656d8891d5990cffe9c60e1591949d51c7cf72a0f1c070c1889b1
-python3 quicknode_draw.py --seller "$SELLER" --buyer "$BUYER" --listing-tx "$LISTING_TX" examples/quicknode-btc-stream/*.json
+curl --fail --silent --show-error https://rpc.testnet.arc.io \
+  -H 'Content-Type: application/json' \
+  --data '{"jsonrpc":"2.0","id":1,"method":"eth_call","params":[{"to":"0x3600000000000000000000000000000000000000","data":"0x70a08231000000000000000000000000565ff030eba37c58a595118f3cc6a3d341b6b414"},"pending"]}'
 ```
 
-The returned indices are **50, 53, 60, 47, 38, 55, 63, 49**. To replay the buyer decision from this same preview, keep the shell variables above and use the two files created by `btc_snapshot.py` in the BTC demo instructions. Start a local seller with a fresh token for this run.
+### QuickNode Streams configuration
+
+The recorded BTC preview uses a historical Stream as an onchain data source for discovering the payment and reconstructing the draw.
+
+| Setting | Configuration |
+| --- | --- |
+| Network and dataset | Arc Testnet, **Block** |
+| Range | Blocks **73,152,620–73,152,622**, inclusive |
+| Filter | [`quicknode_filter.js`](quicknode_filter.js) retains each block number and hash, and extracts transactions with the sample request tag, listing reference, and exact 0.01 test-USDC value. Retaining the later block even when it contains no matching payment supplies the draw hash. |
+| Destination | An HTTPS webhook received one block per delivery. The temporary webhook has been closed. The three captured bodies are available in [`examples/quicknode-btc-stream/`](examples/quicknode-btc-stream/). |
+| Purpose | The buyer identifies the recorded paid request and later block from stream deliveries, then independently verifies the chain evidence and computes the same eight positions. |
+
+[QuickNode Stream configuration](https://dashboard.quicknode.com/streams/1ca9b32c-e4aa-4ef5-9a67-01e9bb273acf)
+
+To reproduce the recorded draw from the saved deliveries, run the following from the repository root. This performs read-only Arc RPC calls and requires internet access and a Python installation configured to trust HTTPS certificates.
 
 ```sh
-OFFER_TX=0x4f344944b484f2b9ec4dce47c1dfe69e656210652c730f1335880d5278d7103c
-export UBC26_BUYER_TOKEN="$(python3 -c 'import secrets; print(secrets.token_urlsafe(32))')"
-python3 seller_api.py --snapshot /tmp/btc-listing.json --seller "$SELLER" --buyer "$BUYER" --listing-tx "$LISTING_TX" --offer-tx "$OFFER_TX" &
-seller_pid=$!
-```
-
-Once the seller prints `Seller API listening`, run the buyer in the same shell. It discovers the payment from the three webhook bodies, verifies the eight privately delivered rows and prices the other 56. A buy recommendation produces an unsigned wallet request. Replaying the decision sends no payment.
-
-```sh
-python3 btc_buyer.py decide --seller "$SELLER" --buyer "$BUYER" --listing-tx "$LISTING_TX" --offer-tx "$OFFER_TX" \
-  --stream-delivery examples/quicknode-btc-stream/*.json --benchmark /tmp/btc-buyer.json \
-  --remaining-budget 0.20 --reward-per-bp 0.20
-kill "$seller_pid"
-unset UBC26_BUYER_TOKEN
-```
-
-Compare the listing root, ordered indices and estimated value with the [recorded Bitcoin decision](examples/arc-btc-decision.json). Gas and available wallet funds are read at replay time and may change the final recommendation.
-
-Select **Best Use of QuickNode Streams** on Devpost to enter the sponsor bounty. [Hackathon guide](https://docs.google.com/document/d/1QaySCo7u3VxMVNdk3C5Ab3ewc2E46AuLntti-Uzx5EY/edit) · [Supported networks](https://www.quicknode.com/docs/streams/supported-chains)
-
-## Earlier Chicago transport demo
-
-The original Chicago run is also available for comparison. [Chicago Stream](https://dashboard.quicknode.com/streams/dac710aa-e3be-409b-a7f5-e0255fbf3a26) · [Three Chicago webhook deliveries](examples/quicknode-stream) · [Verified Chicago draw](examples/quicknode-verified-draw.json)
-
-On November 18 the seller anchored the Chicago snapshot in block 72,891,028. The buyer paid 0.01 test USDC in block 72,891,092, plus 0.000573 test USDC in gas. Block 72,891,094 selected eight row indices. The cloud buyer verified their proofs and recovered the same preview on retry. [Seller anchor](https://explorer.testnet.arc.io/tx/0xac99b6dd2748c309d34b7b4d77055ad0bc13ced6ec14ec6a336b66366d2e4159) · [Buyer payment](https://explorer.testnet.arc.io/tx/0x06d228d192e63d666687d30c62f0fcbf65265a020c57abe83980f9a067946153) · [Recorded public draw](examples/arc-testnet-draw.json)
-
-To independently reproduce the draw from Arc, run the following from the repository root. This makes read-only RPC calls and compares the result with the recorded draw. The row payload and delivery credentials stay outside the repository.
-
-```sh
-python3 -B arc_draw.py \
+python3 quicknode_draw.py \
   --seller 0xbdaf6907e159e633939e9db63adc35b2045db61f \
   --buyer 0x565ff030eba37c58a595118f3cc6a3d341b6b414 \
-  --listing-tx 0xac99b6dd2748c309d34b7b4d77055ad0bc13ced6ec14ec6a336b66366d2e4159 \
-  --request-tx 0x06d228d192e63d666687d30c62f0fcbf65265a020c57abe83980f9a067946153 \
-  > /tmp/replayed-draw.json && diff -u examples/arc-testnet-draw.json /tmp/replayed-draw.json
+  --listing-tx 0xd334d50ff26656d8891d5990cffe9c60e1591949d51c7cf72a0f1c070c1889b1 \
+  examples/quicknode-btc-stream/*.json
 ```
 
-## Arc sample protocol
+The recorded selection is **50, 53, 60, 47, 38, 55, 63, 49**.
 
-The Chicago taxi API provides a working public stand-in for a seller feed. The importer freezes 64 trips in a defined hour, orders them by trip ID and commits each row as an indexed SHA-256 Merkle leaf. The three fields are the trip ID, hundredths of a mile, and fare in cents. A buyer could evaluate fare predictions on trips from a different time window. The published data is freely accessible upstream; the sample fee demonstrates how the protocol would handle a licensed seller feed. [City of Chicago source](https://data.cityofchicago.org/d/ajtu-isnz)
+If a macOS Python installation reports a certificate verification error for the RPC, configure its trusted certificates. On a system with `/etc/ssl/cert.pem`, you can prefix the command with `SSL_CERT_FILE=/etc/ssl/cert.pem`.
 
-1. **Freeze.** Run `python3 chicago_snapshot.py --output /tmp/taxi.json`. Retain that snapshot for the lifetime of the listing. The November 18 import yielded root `0541c018390b0a6a8108260ea7cd44d5cbb67cbe0149259ecd2aec7de0cbb004`.
-2. **Anchor.** On Arc testnet (5042002), the seller sends a zero-value transaction to its own externally owned address. Input data is the ASCII bytes of `UBC26:listing:v1:` followed by the raw 32-byte root. Record the transaction hash. Version 1 fixes the schema, 64 rows, eight samples and price of 0.01 test USDC.
-3. **Request.** The buyer sends exactly 0.01 native test USDC to that seller with input bytes `UBC26:sample:v1:` followed by the raw 32-byte listing transaction hash. The fee is 10^16 native base units, plus network gas. Use an external testnet signer for both transactions.
-4. **Draw.** Wait for the block two heights after the request to finalize. Both parties run `python3 arc_draw.py --seller "$SELLER" --buyer "$BUYER" --listing-tx "$LISTING_TX" --request-tx "$REQUEST_TX" > /tmp/draw.json`. The verifier checks the chain, receipts, payment, tags, ordering and block inclusion. SHA-256 of the draw domain, root, request hash, future block hash and successive counters determines eight distinct positions. Retrying with the same request always returns the same positions. [Arc network parameters](https://docs.arc.io/arc/references/connect-to-arc)
-5. **Deliver and verify.** The seller runs `python3 sample_delivery.py pack /tmp/taxi.json /tmp/draw.json > /tmp/preview.json` and returns the preview to the buyer. The buyer independently produces its own draw from the chain and runs `python3 sample_delivery.py verify /tmp/preview.json /tmp/draw.json`. The verifier checks the exact positions and all six sibling hashes per row. Only commitments, payment and public draw inputs belong onchain. Deliver the eight rows and proofs privately.
+## Decision controls and current scope
 
-The verifier uses a trusted RPC. The future block is a replayable source of demo randomness with potential block-proposer bias. A seller can withhold delivery, and buyers can buy more requests. Production use needs an enforceable disclosure policy and a delivery or refund mechanism. The paid Arc sampling path uses a separate snapshot from the synthetic valuation desk. A fully settled purchase and measurement on a separate real-world benchmark remain open.
+The buyer verifies the listing, payment, draw, sample proofs, and offer before valuation. In the live decision flow it reads the existing USDC contract balance, then checks the native balance and configured remaining budget against the offer and estimated gas. A proof failure blocks valuation. A positive recommendation prepares an unsigned request rather than signing or sending a purchase automatically.
 
-Prepare the two unsigned wallet requests with the commands below. Set `ROOT` to the importer’s output and `LISTING_TX` to the confirmed anchor transaction hash. With `--expected-root`, the buyer checks the seller, transaction and finalized commitment against the advertised root before emitting a payment request. Omit that flag only to prepare parameters offline. Check the returned chain ID against the connected wallet before submitting each request.
+The current buyer estimates the incremental value of the other rows by comparing forecast error across historical windows. Its value depends on the buyer's configured reward per basis point and may differ from the eventual result. The eight preview rows remain available to the buyer even when it passes on the full listing.
+
+The testnet preview, commitment, and offer are recorded onchain. The seller service, proof verification, selection calculation, and valuation run offchain. The BTC replay is a single example of the broader data-market workflow. The current prototype has no settled full purchase, and its future-block randomness can be influenced by a block proposer. A seller can withhold delivery, while repeated previews can disclose more of a listing.
+
+Next steps include completing and evaluating a full purchase, adding delivery or refund guarantees, limiting repeated disclosure, strengthening the randomness source, and supporting additional dataset schemas and buyer tasks.
+
+## Hackathon submission
+
+- **Recommended main track:** Agentic Payments and AI. The buyer reads onchain evidence, evaluates a paid data preview, applies a budget, and prepares a payment request.
+- **Chain award:** Best use of Arc. Proofdesk's recorded commitment, offer, preview payment, and draw use Arc Testnet. The live buyer uses the existing USDC contract at the address listed above. The recorded preview used native transfers between externally owned accounts.
+- **Sponsor bounty:** Best Use of QuickNode Streams. The Stream, filter, webhook destination, captured deliveries, and purpose are documented above.
+
+The [hackathon guide](https://docs.google.com/document/d/1QaySCo7u3VxMVNdk3C5Ab3ewc2E46AuLntti-Uzx5EY/edit) permits **one main track**, **one chain award**, and any qualifying bounties. Consumer Applications has a working frontend and blockchain interaction, though the project is aimed at agent commerce. The DeFi track requires smart-contract interaction, which the recorded native-transfer flow does not demonstrate. ElevenLabs generated narration for the demo video, but audio is not a core Proofdesk product feature.
+
+## Run the tests
 
 ```sh
-python3 arc_intent.py listing --seller "$SELLER" --root "$ROOT"
-python3 arc_intent.py request --seller "$SELLER" --buyer "$BUYER" --listing-tx "$LISTING_TX" --expected-root "$ROOT"
+python3 -B -m unittest discover -q
+node test_showdown_core.js
+node test_quicknode_filter.js
 ```
 
-Run `python3 -B -m unittest -v test_protocol` for a local rehearsal using fictional Arc receipts. It checks that a retry returns the same eight rows, failed authentication or payment denies delivery, and a changed fare fails verification.
-
-**Private delivery demo.** Set a high-entropy `UBC26_BUYER_TOKEN` for the configured buyer and share it over a private channel. Start the loopback service with `python3 seller_api.py --snapshot /tmp/taxi.json --seller "$SELLER" --buyer "$BUYER" --listing-tx "$LISTING_TX"`. Before listening, the service verifies that the snapshot matches the finalized seller commitment. Start it and confirm it is listening before paying for the sample. The buyer calls `GET /sample/<request_tx>` on port 8766 with an Authorization bearer header. The seller independently checks the request against Arc before returning the proof package. Use the same request hash to recover a lost response. This single-buyer demo uses a pre-shared credential; exposing it remotely requires a private or TLS-protected transport.
-
-To fetch from the agent, use `python3 buyer_sample.py --seller "$SELLER" --buyer "$BUYER" --listing-tx "$LISTING_TX" --request-tx "$REQUEST_TX"`. It checks Arc itself, requests the preview, validates each proof and emits the verified receipt. The receipt includes the sample price, the buyer’s actual network fee (gas used times effective gas price), and their sum in 18-decimal native test-USDC base units. It excludes the seller’s listing gas. Repeating this read never sends another payment. Both private delivery routes return HTTP 202 with `{"status":"pending"}` and a `Retry-After` delay while the seller waits for indexing or finality. After that delay, repeat the same authenticated GET. A failed payment or conflicting proof returns HTTP 409. The buyer commands `buyer_sample.py`, `btc_buyer.py decide` and `btc_buyer.py assess` exit with status 75 when confirmation is pending, whether they detect it on their own Arc read or receive it from the seller. Rerun the same command with the same hashes. A retry only reads the existing payments.
-
-## Full purchase on Arc
-
-A seller can offer all 64 committed rows for a fixed **0.10 test USDC**. This is an additional payment after a preview, plus gas. Each listing needs its own seller-signed offer. The seller self-transfers zero with `UBC26:offer:v1:` followed by the listing transaction hash as 32 raw bytes. The buyer pays the seller with `UBC26:purchase:v1:` followed by the offer transaction hash as 32 raw bytes. The seller only releases rows for a finalized payment from its configured buyer.
-
-1. Prepare the seller offer and sign the resulting transaction on Arc testnet. Save the confirmed hash as `OFFER_TX`.
-   ```sh
-   python3 arc_intent.py offer --seller "$SELLER" --listing-tx "$LISTING_TX"
-   ```
-2. Start the seller API with the same snapshot, buyer token and addresses used for the preview. Add `--offer-tx "$OFFER_TX"` to enable full delivery.
-3. To buy, prepare the payment using the root from the verified preview. The CLI checks the finalized offer and root before emitting the unsigned wallet request. Check the gas estimate in the wallet, sign once and save the resulting hash as `PURCHASE_TX`.
-   ```sh
-   python3 arc_intent.py purchase --seller "$SELLER" --buyer "$BUYER" \
-     --listing-tx "$LISTING_TX" --offer-tx "$OFFER_TX" --expected-root "$ROOT"
-   ```
-4. Fetch the full listing privately with the buyer token. The buyer independently checks the payment and recomputes the commitment over all 64 rows. If the response is lost, repeat this read with the same payment hash.
-   ```sh
-   python3 buyer_sample.py --seller "$SELLER" --buyer "$BUYER" \
-     --listing-tx "$LISTING_TX" --offer-tx "$OFFER_TX" --purchase-tx "$PURCHASE_TX"
-   ```
-
-Run `python3 -B -m unittest discover -v` for the offline purchase rehearsal with fictional receipts. The [Bitcoin receipt](examples/arc-btc-decision.json) records the finalized preview payment and the buyer’s recommendation. Full purchase settlement remains pending.
+The Python suite runs local tests with fixture evidence. Node.js is only needed for the JavaScript tests, not for running the demo.

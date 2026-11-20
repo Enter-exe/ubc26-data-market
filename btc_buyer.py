@@ -6,13 +6,16 @@ import os
 import re
 from pathlib import Path
 
-from arc_draw import ArcPending, RPC_URL, draw_indices, quantity, rpc_client, verify_draw
+from arc_draw import ArcPending, RPC_URL, draw_indices, hex_data, quantity, rpc_client, verify_draw
 from arc_intent import purchase_wallet_request
 from arc_purchase import FULL_PRICE_BASE_UNITS, verify_offer, verify_purchase
 from btc_value import measured_outcome, price_preview
 from buyer_sample import fetch_preview, fetch_purchase
 from quicknode_draw import from_deliveries, load_deliveries
 from sample_delivery import btc_row_hour, check, check_full_rows, package
+
+USDC_CONTRACT = "0x3600000000000000000000000000000000000000"
+NATIVE_UNITS_PER_MICRO_USDC = 10**12
 
 
 def usdc(text):
@@ -46,12 +49,17 @@ def arc_decision(rpc, url, token, seller, buyer, listing, request, offer, benchm
         raise ValueError("Full purchase offer differs from the sampled listing")
     envelope = purchase_wallet_request(seller, buyer, offer)
     tx = envelope["params"][0]
+    # The ERC-20 interface and native USDC are two views of the same balance.
+    call = {"to": USDC_CONTRACT, "data": "0x70a08231" + tx["from"][2:].zfill(64)}
+    contract_balance = int(hex_data(rpc("eth_call", [call, "pending"]), 32, "USDC balanceOf result"), 16)
     balance = quantity(rpc("eth_getBalance", [tx["from"], "pending"]), "buyer balance")
     price = int(terms["price_base_units"])
-    receipt = {"mode": "arc-testnet", "draw": draw, "offer": terms}
-    if min(balance, budget) < price:
+    receipt = {"mode": "arc-testnet", "draw": draw, "offer": terms,
+               "usdc_contract": {"address": USDC_CONTRACT, "balance_micro_usdc": str(contract_balance)}}
+    available = min(balance, budget, contract_balance * NATIVE_UNITS_PER_MICRO_USDC)
+    if available < price:
         receipt["valuation"] = {"decision": "pass", "reason": "Full price exceeds remaining funds",
-                                "price_base_units": str(price), "available_base_units": str(min(balance, budget))}
+                                "price_base_units": str(price), "available_base_units": str(available)}
         return receipt
     gas_price = quantity(rpc("eth_gasPrice", []), "gas price")
     gas_limit = quantity(rpc("eth_estimateGas", [tx]), "estimated gas")
