@@ -8,7 +8,9 @@ Proofdesk coordinates a paid preview whose rows are selected after the seller co
 
 ## Try the demo
 
-**Requirements:** Python 3 and a modern desktop browser with JavaScript enabled. The Python server uses only the standard library. The interactive replay needs no API key, wallet, testnet funds, or internet connection.
+**[Open the interactive Proofdesk demo](https://proofdesk-demo-ubc26.astralclove1026.chatgpt.site/)** in a modern browser. No download or sign-in is required.
+
+To run the demo locally, use Python 3 and a modern desktop browser with JavaScript enabled. The Python server uses only the standard library. The interactive replay needs no API key, wallet, testnet funds, or internet connection.
 
 1. Clone or download this repository and open a terminal in its root directory.
 2. Start the local server:
