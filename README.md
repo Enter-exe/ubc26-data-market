@@ -91,25 +91,25 @@ The track and Arc awards can stack ($2,000 and $1,000), alongside an overall awa
 
 In the Streams buyer flow, QuickNode supplies two inputs the buyer needs to unlock a preview: the sample payment transaction and the hash of the block two heights later. The buyer discovers the payment from the delivery, combines it with the listing root and future block hash to select eight rows, and independently checks the payment and finality against Arc. The seller serves the rows privately through its authenticated API. The BTC showdown uses its existing offline replay. The historical Stream below targets the **paid Chicago preview**.
 
-| QuickNode setting | Value for the three-block rehearsal |
+| QuickNode setting | Configuration used for the hosted backfill |
 | --- | --- |
 | Network and dataset | Arc Testnet · Block |
 | Range | Historical, start **72891092**, end **72891094**, inclusive. Use batch size 1. |
 | JavaScript filter | Paste [quicknode_filter.js](quicknode_filter.js). Keep each block height and hash, and extract transfers of 0.01 test USDC carrying the sample tag and listing reference. The final block's hash matters even when it contains zero sample requests. |
-| Destination | A private S3-compatible bucket, JSON output. A dedicated prefix makes the three small deliveries easy to retrieve and replay. A webhook that saves each filtered JSON body also works. Only public chain fields pass through this destination. |
+| Destination | QuickNode pushed one filtered JSON body per block over HTTPS to a temporary webhook. The receiver retained the three public chain records for replay and was shut down after delivery. Sample rows came directly from the authenticated seller API. |
 
-Create and run the Stream, then download the three destination bodies into a directory containing just those files. This read-only command reproduces the draw for our recorded payment. The importer also accepts gzip files with a `.gz` suffix.
+The [three destination bodies](examples/quicknode-stream) came from [QuickNode Stream dac710aa-e3be-409b-a7f5-e0255fbf3a26](https://dashboard.quicknode.com/streams/dac710aa-e3be-409b-a7f5-e0255fbf3a26). Replay the draw from the repository root using the public Arc Testnet RPC.
 
 ```sh
 SELLER=0xbdaf6907e159e633939e9db63adc35b2045db61f
 BUYER=0x565ff030eba37c58a595118f3cc6a3d341b6b414
 LISTING_TX=0xac99b6dd2748c309d34b7b4d77055ad0bc13ced6ec14ec6a336b66366d2e4159
-python3 quicknode_draw.py --seller "$SELLER" --buyer "$BUYER" --listing-tx "$LISTING_TX" /path/to/deliveries/*
+python3 quicknode_draw.py --seller "$SELLER" --buyer "$BUYER" --listing-tx "$LISTING_TX" examples/quicknode-stream/*.json
 ```
 
-The receipt includes the Stream ID and the ordered indices **28, 44, 56, 62, 25, 53, 10, 46**. To fetch the eight rows and check their proofs as well, start the Chicago seller API described below and run `python3 buyer_sample.py --seller "$SELLER" --buyer "$BUYER" --listing-tx "$LISTING_TX" --stream-delivery /path/to/deliveries/*` with the buyer token set.
+The receipt includes the Stream ID and the ordered indices **28, 44, 56, 62, 25, 53, 10, 46**. To fetch the eight rows and check their proofs as well, start the Chicago seller API described below and run `python3 buyer_sample.py --seller "$SELLER" --buyer "$BUYER" --listing-tx "$LISTING_TX" --stream-delivery examples/quicknode-stream/*.json` with the buyer token set.
 
-**Submission status:** The filter and buyer integration have been rehearsed with public Arc block data. A hosted QuickNode Stream and its first destination delivery are pending. Save its ID and a delivery-backed draw receipt for the demo, and opt in to **Best Use of QuickNode Streams** on Devpost. The $500 bounty allows historical backfills and stacks with Agentic Payments & AI and Best use of Arc. [Hackathon guide](https://docs.google.com/document/d/1QaySCo7u3VxMVNdk3C5Ab3ewc2E46AuLntti-Uzx5EY/edit) · [Participant credits](https://quicknode.notion.site/quicknode-credits-for-college-xyz) · [Supported Streams networks](https://www.quicknode.com/docs/streams/supported-chains) · [S3 destination settings](https://www.quicknode.com/docs/streams/destinations/s3)
+**Verified result.** Against the hosted deliveries, the buyer independently confirmed the historical payment, retrieved the private eight-row preview and verified all eight Merkle proofs. The [verified draw receipt](examples/quicknode-verified-draw.json) records the Stream ID, block hashes and selected indices. To enter the $500 sponsor bounty, opt in to **Best Use of QuickNode Streams** on Devpost. [Hackathon guide](https://docs.google.com/document/d/1QaySCo7u3VxMVNdk3C5Ab3ewc2E46AuLntti-Uzx5EY/edit) · [Supported Streams networks](https://www.quicknode.com/docs/streams/supported-chains) · [Webhook destination settings](https://www.quicknode.com/docs/streams/destinations/webhooks)
 
 ## Replay the paid preview
 
