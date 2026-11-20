@@ -16,7 +16,7 @@ Rebuild the standalone showdown from the original console’s embedded evidence 
 
 ## Run the BTC training-data demo
 
-The seller source is historical Coinbase Exchange BTC–USD candles. Each example pairs the preceding hour’s high–low range with the current hour’s range. Ranges are relative to the opening price, rounded to basis points and stored plus one. Adjacent examples share an hourly range. These public candles stand in for a seller feed; anyone can recreate this particular listing from Coinbase. [Coinbase candle API](https://docs.cdp.coinbase.com/api-reference/exchange-api/rest-api/products/get-product-candles)
+The seller source is historical Coinbase Exchange BTC–USD candles. Each example pairs the preceding hour’s high–low range with the current hour’s range. Ranges are relative to the opening price, rounded to basis points and stored plus one. Adjacent examples share an hourly range. If both hours appear in the preview, the buyer compares the earlier row’s observed range with the later row’s preceding range. A disagreement blocks valuation even if both Merkle proofs match. These public candles stand in for a seller feed; anyone can recreate this particular listing from Coinbase. [Coinbase candle API](https://docs.cdp.coinbase.com/api-reference/exchange-api/rest-api/products/get-product-candles)
 
 ```sh
 python3 btc_snapshot.py --output /tmp/btc-listing.json --benchmark-output /tmp/btc-buyer.json

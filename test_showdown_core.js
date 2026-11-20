@@ -61,3 +61,43 @@ test("the simulated seed and draw order must reproduce the Python buyer's select
     await assert.rejects(Showdown.evaluate(data, false), /draw/i);
   }
 });
+
+test("valid proofs for inconsistent BTC hours or adjacent ranges cannot release a valuation", async () => {
+  // Use the Python seller and draw so the committed rows have genuine proofs.
+  const build = `
+import sys, json, hashlib
+from arc_draw import draw_indices
+from market import tree
+from sample_delivery import package
+rows = json.load(sys.stdin)
+root = tree(rows)[-1][0]
+seed = 0
+request = hashlib.sha256(f"offline BTC preview {seed}".encode()).digest()
+block = hashlib.sha256(b"offline BTC draw block").digest()
+indices = draw_indices(root, request, block)
+draw = dict(indices=indices, root=root.hex(), request_tx=request.hex())
+snapshot = dict(rows=rows, manifest={"root": root.hex()})
+print(json.dumps(dict(runs={"0.20": dict(draw, seed=seed)}, samples=package(snapshot, draw)["samples"])))
+`;
+  const { execFileSync } = require("node:child_process");
+  for (const [step, offset, next, reason] of [
+    [3600, 0, 3, /adjacent.*range/i],
+    [3600, 1, 2, /UTC hour/i],
+    [7200, 0, 2, /drawn positions/i],
+  ]) {
+    const rows = Array.from({length: 64}, (_, i) => [
+      "BTC-USD:1h:" + (1704067200 + i * step + offset), i + 1, i + next,
+    ]);
+    const data = JSON.parse(execFileSync("python3", ["-B", "-c", build], {
+      cwd: __dirname, input: JSON.stringify(rows), encoding: "utf8",
+    }));
+    const rejected = await Showdown.evaluate(data, false);
+    assert.deepEqual(rejected.verified, Array(8).fill(true));
+    assert.match(rejected.qualityError, reason);
+    assert.equal(rejected.run, null);
+    const damaged = await Showdown.evaluate(data, true);
+    assert.equal(damaged.run, null);
+    assert.equal(damaged.qualityError, null);
+    assert.equal(damaged.verified.filter(Boolean).length, 7);
+  }
+});

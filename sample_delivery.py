@@ -76,17 +76,20 @@ def check(delivery, draw):
     if [s["index"] for s in samples] != positions(draw):
         raise ValueError("Received indices differ from the chain-selected draw")
     root = bytes.fromhex(draw["root"])
-    start_hour = None
     for s in samples:
         path = [bytes.fromhex(h) for h in s["proof"]]
         if (type(s["index"]) is not int or len(path) != 6 or any(len(h) != 32 for h in path)
                 or not verify(s["index"], s["row"], path, root)):
             raise ValueError(f"Invalid proof at index {s['index']}")
-        if draw.get("dataset") == BTC_DATASET:
-            start = btc_row_hour(s["row"]) - 3600 * s["index"]
-            if start_hour is not None and start != start_hour:
-                raise ValueError("Sampled BTC hours disagree with the chain-selected positions")
-            start_hour = start
+    if draw.get("dataset") == BTC_DATASET:
+        rows = {sample["index"]: sample["row"] for sample in samples}
+        starts = {btc_row_hour(row) - 3600 * index for index, row in rows.items()}
+        if len(starts) != 1:
+            raise ValueError("Sampled BTC hours disagree with the chain-selected positions")
+        for index, row in rows.items():
+            previous = rows.get(index - 1)
+            if previous is not None and previous[2] != row[1]:
+                raise ValueError(f"Conflicting BTC range in sampled rows {index - 1} and {index}")
 
 
 def main():

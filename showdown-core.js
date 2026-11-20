@@ -48,6 +48,26 @@ globalThis.Showdown = (() => {
     return Array.from(node, byte => byte.toString(16).padStart(2, "0")).join("") === root;
   }
 
+  function sampleQualityError(samples) {
+    let listingStart;
+    let previous;
+    for (const sample of samples) {
+      const hour = Number(sample.row[0].split(":").pop());
+      if (hour % 3600 !== 0) return "A BTC timestamp falls outside a UTC hour boundary.";
+      const start = hour - sample.index * 3600;
+      if (listingStart !== undefined && start !== listingStart) {
+        return "The BTC hours disagree with their drawn positions.";
+      }
+      if (previous && previous.index + 1 === sample.index && previous.row[2] !== sample.row[1]) {
+        return "Adjacent rows #" + previous.index + " and #" + sample.index +
+          " disagree on the same hour’s range.";
+      }
+      listingStart = start;
+      previous = sample;
+    }
+    return null;
+  }
+
   async function evaluate(data, altered) {
     if (!globalThis.crypto?.subtle) throw Error("Proof checking requires a local file, localhost, or HTTPS.");
     const run = data.runs["0.20"];
@@ -62,10 +82,12 @@ globalThis.Showdown = (() => {
     const originalValue = first.row[2];
     if (altered) first.row[2] += 100;
     const verified = await Promise.all(samples.map(sample => matchesRoot(sample, run.root)));
+    const valid = verified.every(Boolean);
+    const qualityError = valid ? sampleQualityError(samples) : null;
     return {
       samples, verified, originalValue,
       changedIndex: altered ? first.index : null,
-      run: verified.every(Boolean) ? run : null,
+      qualityError, run: valid && !qualityError ? run : null,
     };
   }
   return {evaluate};

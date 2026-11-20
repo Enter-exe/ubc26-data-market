@@ -94,6 +94,26 @@ globalThis.Showdown = (() => {
     return Array.from(node, byte => byte.toString(16).padStart(2, "0")).join("") === root;
   }
 
+  function sampleQualityError(samples) {
+    let listingStart;
+    let previous;
+    for (const sample of samples) {
+      const hour = Number(sample.row[0].split(":").pop());
+      if (hour % 3600 !== 0) return "A BTC timestamp falls outside a UTC hour boundary.";
+      const start = hour - sample.index * 3600;
+      if (listingStart !== undefined && start !== listingStart) {
+        return "The BTC hours disagree with their drawn positions.";
+      }
+      if (previous && previous.index + 1 === sample.index && previous.row[2] !== sample.row[1]) {
+        return "Adjacent rows #" + previous.index + " and #" + sample.index +
+          " disagree on the same hour’s range.";
+      }
+      listingStart = start;
+      previous = sample;
+    }
+    return null;
+  }
+
   async function evaluate(data, altered) {
     if (!globalThis.crypto?.subtle) throw Error("Proof checking requires a local file, localhost, or HTTPS.");
     const run = data.runs["0.20"];
@@ -108,10 +128,12 @@ globalThis.Showdown = (() => {
     const originalValue = first.row[2];
     if (altered) first.row[2] += 100;
     const verified = await Promise.all(samples.map(sample => matchesRoot(sample, run.root)));
+    const valid = verified.every(Boolean);
+    const qualityError = valid ? sampleQualityError(samples) : null;
     return {
       samples, verified, originalValue,
       changedIndex: altered ? first.index : null,
-      run: verified.every(Boolean) ? run : null,
+      qualityError, run: valid && !qualityError ? run : null,
     };
   }
   return {evaluate};
@@ -160,7 +182,9 @@ function inspect(){
 function render(){
   const samples=(phase>=3 && result)?result.samples:excerpt;
   const checked=phase>=4 && result, failed=!!checked && result.verified.includes(false), decided=phase===5 && !!result;
-  const currentVerdict=failed?"Purchase skipped":result?.run?.valuation?.decision==="buy"?"Buy decision":"Pass decision";
+  const qualityError=checked && result.qualityError;
+  const rejected=failed || Boolean(qualityError);
+  const currentVerdict=rejected?"Purchase skipped":result?.run?.valuation?.decision==="buy"?"Buy decision":"Pass decision";
   document.querySelectorAll("[data-case]").forEach(b=>b.setAttribute("aria-pressed",String(Number(b.dataset.case)===caseId)));
   setText("counter",error?"Replay unavailable":(caseId?"Case B":"Case A")+" · "+(phase?"Step "+phase+" of 5":"Ready"));
   setText("play-label",playing?"Pause":caseId===1 && phase===5?"Replay showdown":phase===0 && !caseId?"Run showdown":"Resume");
@@ -194,22 +218,23 @@ function render(){
   steps.forEach((label,i)=>{
     const row=element("li",""),done=phase>i,invalid=failed && i===3;
     if(i===3 && checked)label=failed?"Proof mismatch · row #"+result.samples[result.verified.indexOf(false)].index:"All eight proofs match";
-    if(i===4 && decided)label=currentVerdict;
+    if(i===4 && decided)label=qualityError?"Sample quality check failed":currentVerdict;
     const stopped=Boolean(error) && phase===i+1;
+    const rejectedStep=invalid || stopped || (qualityError && decided && i===4);
     if(stopped)label="Delivery check stopped";
-    row.className=(invalid || stopped?"fail":done?"done":"")+(phase===i+1?" current":"");
-    const code=element("span",invalid || stopped?"×":done?"✓":String(i+1));code.className="step-code";row.append(code,element("span",label));ledger.append(row);
+    row.className=(rejectedStep?"fail":done?"done":"")+(phase===i+1?" current":"");
+    const code=element("span",rejectedStep?"×":done?"✓":String(i+1));code.className="step-code";row.append(code,element("span",label));ledger.append(row);
   });
   let headline=["Standing by.","Root received.","Draw received.","Sample received.",failed?"Mismatch found.":"Proofs match.",currentVerdict+"."][phase];
   const v=result?.run?.valuation;
   const messages=["Run the discovery to follow both deliveries.","The seller has fixed the contents of its 64-row listing.","The recorded draw picks eight indices before the API returns any rows.","The buyer reproduced the draw and received all eight selected rows with proofs.",failed?"One delivered range fails the original commitment. Valuation is blocked.":"Each sampled row belongs to the committed listing.",failed?"One changed range breaks its proof. The buyer stops before pricing the other 56 rows.":v?.decision==="buy"?"The estimated value of the remaining 56 hours covers the full price and gas.":"The purchase does not meet the buyer’s value and budget limits."];
   setText("mobile-status","Buyer agent · "+(error?"Replay unavailable":headline)+" ↓");
-  setText("decision",error?"Replay unavailable.":headline);setText("reason",error||messages[phase]);
-  byId("agent").dataset.tone=failed || error?"bad":phase>=4?"good":"";
+  setText("decision",error?"Replay unavailable.":headline);setText("reason",error||qualityError||messages[phase]);
+  byId("agent").dataset.tone=rejected || error?"bad":phase>=4?"good":"";
   setText("verified",checked?result.verified.filter(Boolean).length+" / "+result.samples.length:"—");
-  setText("value",decided && v?formatMoney(v.estimated_value_base_units):failed?"Skipped":"—");
+  setText("value",decided && v?formatMoney(v.estimated_value_base_units):rejected?"Skipped":"—");
   setText("cost",formatMoney(listing.valuation.total_cost_base_units));
-  setText("receipt",decided?(failed?"$0 spent on the full dataset.":v?.decision==="buy"?v.historical_mean_gain_bps.toFixed(2)+" bp expected gain × $"+(Number(v.reward_base_units_per_bp)/1e18).toFixed(2)+"/bp. Simulated purchase.":"Recorded pass · full purchase skipped."):"BTC buyer replay · no wallet signature required.");
+  setText("receipt",decided?(rejected?"$0 spent on the full dataset.":v?.decision==="buy"?v.historical_mean_gain_bps.toFixed(2)+" bp expected gain × $"+(Number(v.reward_base_units_per_bp)/1e18).toFixed(2)+"/bp. Simulated purchase.":"Recorded pass · full purchase skipped."):"BTC buyer replay · no wallet signature required.");
   const compare=byId("compare");compare.hidden=!(caseId && decided && firstVerdict);
   if(!compare.hidden){setText("a-result",firstVerdict);setText("b-result",currentVerdict+" · "+result.verified.filter(Boolean).length+"/8 verified")}
   inspect();setText("announce",(caseId?"Altered sample. ":"Original sample. ")+(error||headline));

@@ -91,6 +91,21 @@ class BtcProtocolTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "positions"):
             check(delivery, draw)
 
+    def test_verified_preview_rejects_disagreement_about_the_same_hour(self):
+        rows = [row.copy() for row in self.rows]
+        rows[41][1] += 1
+        root = tree(rows)[-1][0].hex()
+        snapshot = {"rows": rows, "manifest": {"root": root}}
+        draw = {"root": root, "request_tx": REQUEST, "dataset": "btc-usd-hourly"}
+        for indices in ([41, 10, 14, 54, 26, 40, 33, 51], [40, 10, 14, 54, 26, 41, 33, 51]):
+            with self.subTest(indices=indices):
+                draw["indices"] = indices
+                with self.assertRaisesRegex(ValueError, "range.*40.*41"):
+                    check(package(snapshot, draw), draw)
+        # With the predecessor undisclosed, the sample cannot establish a contradiction.
+        draw["indices"] = [41, 10, 14, 54, 26, 39, 33, 51]
+        check(package(snapshot, draw), draw)
+
     def test_unsigned_purchase_targets_validated_offer(self):
         envelope = arc_intent.purchase_wallet_request(SELLER, BUYER, OFFER)
         self.assertEqual(envelope["params"], [{"from": BUYER, "to": SELLER, "value": hex(PRICE),
