@@ -109,7 +109,28 @@ LISTING_TX=0xd334d50ff26656d8891d5990cffe9c60e1591949d51c7cf72a0f1c070c1889b1
 python3 quicknode_draw.py --seller "$SELLER" --buyer "$BUYER" --listing-tx "$LISTING_TX" examples/quicknode-btc-stream/*.json
 ```
 
-The returned indices are **50, 53, 60, 47, 38, 55, 63, 49**. To reproduce the valuation, use the BTC seller API, benchmark and buyer token from the instructions above, set `OFFER_TX=0x4f344944b484f2b9ec4dce47c1dfe69e656210652c730f1335880d5278d7103c`, and run `btc_buyer.py decide` with `--stream-delivery examples/quicknode-btc-stream/*.json --reward-per-bp 0.20` in place of the request hash and reward in that example. A new run uses the current gas quote. Select **Best Use of QuickNode Streams** on Devpost to enter the sponsor bounty. [Hackathon guide](https://docs.google.com/document/d/1QaySCo7u3VxMVNdk3C5Ab3ewc2E46AuLntti-Uzx5EY/edit) · [Supported networks](https://www.quicknode.com/docs/streams/supported-chains)
+The returned indices are **50, 53, 60, 47, 38, 55, 63, 49**. To replay the buyer decision from this same preview, keep the shell variables above and use the two files created by `btc_snapshot.py` in the BTC demo instructions. Start a local seller with a fresh token for this run.
+
+```sh
+OFFER_TX=0x4f344944b484f2b9ec4dce47c1dfe69e656210652c730f1335880d5278d7103c
+export UBC26_BUYER_TOKEN="$(python3 -c 'import secrets; print(secrets.token_urlsafe(32))')"
+python3 seller_api.py --snapshot /tmp/btc-listing.json --seller "$SELLER" --buyer "$BUYER" --listing-tx "$LISTING_TX" --offer-tx "$OFFER_TX" &
+seller_pid=$!
+```
+
+Once the seller prints `Seller API listening`, run the buyer in the same shell. It discovers the payment from the three webhook bodies, verifies the eight privately delivered rows and prices the other 56. A buy recommendation produces an unsigned wallet request. Replaying the decision sends no payment.
+
+```sh
+python3 btc_buyer.py decide --seller "$SELLER" --buyer "$BUYER" --listing-tx "$LISTING_TX" --offer-tx "$OFFER_TX" \
+  --stream-delivery examples/quicknode-btc-stream/*.json --benchmark /tmp/btc-buyer.json \
+  --remaining-budget 0.20 --reward-per-bp 0.20
+kill "$seller_pid"
+unset UBC26_BUYER_TOKEN
+```
+
+Compare the listing root, ordered indices and estimated value with the [recorded Bitcoin decision](examples/arc-btc-decision.json). Gas and available wallet funds are read at replay time and may change the final recommendation.
+
+Select **Best Use of QuickNode Streams** on Devpost to enter the sponsor bounty. [Hackathon guide](https://docs.google.com/document/d/1QaySCo7u3VxMVNdk3C5Ab3ewc2E46AuLntti-Uzx5EY/edit) · [Supported networks](https://www.quicknode.com/docs/streams/supported-chains)
 
 ## Earlier Chicago transport demo
 
@@ -173,4 +194,4 @@ A seller can offer all 64 committed rows for a fixed **0.10 test USDC**. This is
      --listing-tx "$LISTING_TX" --offer-tx "$OFFER_TX" --purchase-tx "$PURCHASE_TX"
    ```
 
-Run `python3 -B -m unittest discover -v` for the offline purchase rehearsal with fictional receipts. The public Arc transaction links above cover the paid preview. A live BTC preview and full-purchase receipt remain pending.
+Run `python3 -B -m unittest discover -v` for the offline purchase rehearsal with fictional receipts. The [Bitcoin receipt](examples/arc-btc-decision.json) records the finalized preview payment and the buyer’s recommendation. Full purchase settlement remains pending.
