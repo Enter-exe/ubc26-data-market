@@ -8,6 +8,7 @@ from urllib.request import HTTPRedirectHandler, Request, build_opener
 
 from arc_draw import ArcPending, RPC_URL, rpc_client, verify_draw
 from arc_purchase import verify_purchase
+from quicknode_draw import from_deliveries, load_deliveries
 from sample_delivery import check, check_full_rows
 
 
@@ -58,6 +59,8 @@ def main():
         parser.add_argument(arg, required=True)
     payment = parser.add_mutually_exclusive_group(required=True)
     payment.add_argument("--request-tx", help="Sample payment transaction")
+    payment.add_argument("--stream-delivery", nargs="+", metavar="JSON",
+                         help="Discover the paid preview from filtered Quicknode Streams files")
     payment.add_argument("--purchase-tx", help="Full purchase transaction")
     parser.add_argument("--offer-tx", help="Seller offer for the full purchase")
     args = parser.parse_args()
@@ -72,7 +75,10 @@ def main():
             purchase = verify_purchase(rpc, args.seller, args.buyer, args.listing_tx, args.offer_tx, args.purchase_tx)
             receipt = {"purchase": purchase, "delivery": fetch_purchase(args.seller_api, token, purchase)}
         else:
-            draw = verify_draw(rpc, args.seller, args.buyer, args.listing_tx, args.request_tx)
+            if args.stream_delivery:
+                draw = from_deliveries(load_deliveries(args.stream_delivery), args.seller, args.buyer, args.listing_tx, rpc)
+            else:
+                draw = verify_draw(rpc, args.seller, args.buyer, args.listing_tx, args.request_tx)
             receipt = {"draw": draw, "delivery": fetch_preview(args.seller_api, token, draw)}
     except ArcPending as exc:
         parser.exit(75, f"{exc}. Repeat this read with the same transaction hash.\n")
